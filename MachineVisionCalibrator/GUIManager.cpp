@@ -21,26 +21,23 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec4i> lines, Scalar color, i
 	for (size_t i = 0; i < lines.size(); i++)
 	{
 		Vec4i l = lines[i];
-		/*int x1 = lines[i][0];
-		int y1 = lines[i][1];
-		int x2 = lines[i][2];
-		int y2 = lines[i][3];
-		float k = (y2 - y1) / (float)(x2 - x1);
-		if (k < 0)*/
 		line(sourceImage, Point(l[0], l[1]), Point(l[2], l[3]), color, thickness, CV_AA);
 	}
 }
 
-void GUIManager::DrawLinesFormula(Mat sourceImage, vector<Vec2f> formulae, Scalar color, int thickness)
+void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, int thickness)
 {
-	for (size_t i = 0; i < formulae.size(); i++)
+	for (size_t i = 0; i < lines.size(); i++)
 	{
-		float k = formulae[i][0];
-		float b = formulae[i][1];
-		int xmax = sourceImage.cols;
-		int ymax = sourceImage.rows;
-		//if (k < 0)
-		line(sourceImage, Point(xmax, k * xmax + b), Point((ymax-b) / k, ymax), color, thickness, CV_AA);
+		float rho = lines[i][0], theta = lines[i][1];
+		Point pt1, pt2;
+		double a = cos(theta), b = sin(theta);
+		double x0 = a*rho, y0 = b*rho;
+		pt1.x = cvRound(x0 + 1000 * (-b));
+		pt1.y = cvRound(y0 + 1000 * (a));
+		pt2.x = cvRound(x0 - 1000 * (-b));
+		pt2.y = cvRound(y0 - 1000 * (a));
+		line(sourceImage, pt1, pt2, color, thickness, CV_AA);
 	}
 }
 

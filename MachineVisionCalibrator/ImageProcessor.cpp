@@ -24,7 +24,7 @@ ImageProcessor* ImageProcessor::Instance()
 Mat ImageProcessor::CannyEdgeDetect(Mat sourceImage, int threshold)
 {
 	Mat outputImage;
-	Canny(sourceImage, outputImage, threshold, threshold * 4, 3);
+	Canny(sourceImage, outputImage, threshold, threshold * 3, 3);
 	return outputImage;
 }
 
@@ -35,16 +35,24 @@ Mat ImageProcessor::ConvertColorToGray(Mat sourceImage)
 	return outputImage;
 }
 
-vector<Vec4i> ImageProcessor::ProbablisticHoughLines(Mat sourceImage, int minVote, int minLength, int maxGap)
+vector<Vec4i> ImageProcessor::HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap)
 {
 	vector<Vec4i> lines;
 	HoughLinesP(sourceImage, lines, 1, CV_PI / 180, minVote, minLength, maxGap);
 	return lines;
 }
 
-vector<Vec2f> ImageProcessor::CalculateLineFormula(vector<Vec4i> lines)
+vector<Vec2f> ImageProcessor::HoughLineTransform(Mat sourceImage, int threshold)
+{
+	vector<Vec2f> lines;
+	HoughLines(sourceImage, lines, 1, CV_PI / 180, threshold, 0, 0);
+	return lines;
+}
+
+vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 {
 	vector<Vec2f> formulae;
+	//this is not right. use polar coordinates for the line formula.
 
 	for (size_t i = 0; i < lines.size(); i++)
 	{
