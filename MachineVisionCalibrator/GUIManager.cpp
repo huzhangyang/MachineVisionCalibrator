@@ -41,9 +41,17 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 	}
 }
 
-void GUIManager::ShowImage(string title, Mat sourceImage)
+void GUIManager::CreateWindow(string title)
 {
 	namedWindow(title, WINDOW_NORMAL);
+}
+
+void GUIManager::ShowImage(string title, Mat sourceImage)
+{
 	imshow(title, sourceImage);
-	waitKey();
+}
+
+void GUIManager::CreateTrackBar(string name, string windowTitle, int* value, int maxvalue, TrackbarCallback onChange)
+{
+	createTrackbar(name, windowTitle, value, maxvalue, onChange);
 }

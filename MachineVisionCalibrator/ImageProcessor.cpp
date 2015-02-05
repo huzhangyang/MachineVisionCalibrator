@@ -21,10 +21,10 @@ ImageProcessor* ImageProcessor::Instance()
 	return processor;
 }
 
-Mat ImageProcessor::CannyEdgeDetect(Mat sourceImage, int threshold)
+Mat ImageProcessor::CannyEdgeDetect(Mat sourceImage, int threshold, int multiplier)
 {
 	Mat outputImage;
-	Canny(sourceImage, outputImage, threshold, threshold * 3, 3);
+	Canny(sourceImage, outputImage, threshold, threshold * multiplier, 3);
 	return outputImage;
 }
 

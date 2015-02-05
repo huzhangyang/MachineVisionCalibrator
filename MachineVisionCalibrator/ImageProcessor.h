@@ -9,7 +9,7 @@ using namespace std;
 class ImageProcessor{
 public:
 	static ImageProcessor* Instance();
-	Mat CannyEdgeDetect(Mat sourceImage, int threshold);
+	Mat CannyEdgeDetect(Mat sourceImage, int threshold, int multiplier);
 	Mat ConvertColorToGray(Mat sourceImage);
 	vector<Vec2f> HoughLineTransform(Mat sourceImage, int threshold);
 	vector<Vec4i> HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap);
