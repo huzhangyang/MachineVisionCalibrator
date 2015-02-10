@@ -4,7 +4,10 @@ static ImageProcessor* processor = nullptr;//µ¥Àý
 
 static int vec2fcomp(Vec2f p1, Vec2f p2)
 {
-	return p1[0] > p2[0];
+	if (p1[0] == p2[0])
+		return p1[1] > p2[1];
+	else
+		return p1[0] > p2[0];
 }
 
 ImageProcessor::ImageProcessor()
@@ -52,7 +55,6 @@ vector<Vec2f> ImageProcessor::HoughLineTransform(Mat sourceImage, int threshold)
 vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 {
 	vector<Vec2f> formulae;
-	//this is not right. use polar coordinates for the line formula.
 
 	for (size_t i = 0; i < lines.size(); i++)
 	{
@@ -60,21 +62,30 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		int y1 = lines[i][1];
 		int x2 = lines[i][2];
 		int y2 = lines[i][3];
-		float k, b;
-		k = (y2 - y1) / (float)(x2 - x1);
-		b = (y1 + y2 - k * (x1 + x2)) * 0.5;
-		formulae.push_back(Vec2f(k, b));
+		int theta, rho;
+		if (y2 == y1)
+		{
+			theta = 0; rho = y1;
+		}
+		else if (x2 == x1)
+		{
+			theta = 180; rho = x1;
+		}
+		else
+		{
+			theta = cvRound(atan2(y2 - y1, x2 - x1) * 180 / CV_PI);
+			rho = cvRound(x1 * cos(theta) + y1 * sin(theta));
+		}
+		
+		formulae.push_back(Vec2f(theta, rho));
 	}
 
 	sort(formulae.begin(), formulae.end(), vec2fcomp);
 	for (size_t i = 0; i < formulae.size(); i++)
 	{ 
-		float k = formulae[i][0];
-		float b = formulae[i][1];
-		if (b > 0)
-			cout << "y= " << k << " x + " << (int)b << endl;
-		else
-			cout << "y= " << k << " x - " << abs((int)b) << endl;
+		float theta = formulae[i][0];
+		float rho = formulae[i][1];
+		cout << "theta = " << theta << ",rho = " << rho << endl;
 	}
 	return formulae;
 }

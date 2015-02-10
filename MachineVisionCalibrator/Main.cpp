@@ -36,6 +36,8 @@ int main(int argc, char** argv)
 	//GUIManager::Instance()->CreateTrackBar("MaxGap", "Detected Image", &hough_maxgap, 20, OnChangeHoughParameter);
 	GUIManager::Instance()->ShowImage("Detected Image", detectedImage);
 
+	ImageProcessor::Instance()->TransformLineFormula(detectedLines);
+
 	waitKey();
 	return 0;
 }
