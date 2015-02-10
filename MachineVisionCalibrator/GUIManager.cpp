@@ -29,15 +29,19 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 {
 	for (size_t i = 0; i < lines.size(); i++)
 	{
-		float rho = lines[i][0], theta = lines[i][1];
-		Point pt1, pt2;
-		double a = cos(theta), b = sin(theta);
-		double x0 = a*rho, y0 = b*rho;
-		pt1.x = cvRound(x0 + 1000 * (-b));
-		pt1.y = cvRound(y0 + 1000 * (a));
-		pt2.x = cvRound(x0 - 1000 * (-b));
-		pt2.y = cvRound(y0 - 1000 * (a));
-		line(sourceImage, pt1, pt2, color, thickness, CV_AA);
+		float theta = lines[i][0], intercept = lines[i][1];
+		if (theta == 0)
+		{
+			//line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept), color, thickness, CV_AA);//ºáÏß
+		}
+		else if (theta == 255)
+		{
+			//line(sourceImage, Point(intercept, 0), Point(intercept, sourceImage.rows), color, thickness, CV_AA);//ÊúÏß
+		}
+		else
+		{
+			line(sourceImage, Point(0, intercept), Point(tan(theta) * sourceImage.cols + intercept, 0), color, thickness, CV_AA);
+		}
 	}
 }
 

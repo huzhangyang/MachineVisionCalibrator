@@ -62,30 +62,59 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		int y1 = lines[i][1];
 		int x2 = lines[i][2];
 		int y2 = lines[i][3];
-		int theta, rho;
+		float theta, intercept;
 		if (y2 == y1)
 		{
-			theta = 0; rho = y1;
+			theta = 0; intercept = y1;
 		}
 		else if (x2 == x1)
 		{
-			theta = 180; rho = x1;
+			theta = 255; intercept = x1;
 		}
 		else
 		{
-			theta = cvRound(atan2(y2 - y1, x2 - x1) * 180 / CV_PI);
-			rho = cvRound(x1 * cos(theta) + y1 * sin(theta));
+			theta = atan2(y2 - y1, x2 - x1);
+			int b1 = y1 - x1 * tan(theta);
+			int b2 = y2 - x2 * tan(theta);
+			intercept = (b1 + b2) / 2;
 		}
-		
-		formulae.push_back(Vec2f(theta, rho));
+
+		formulae.push_back(Vec2f(theta, intercept));
 	}
 
 	sort(formulae.begin(), formulae.end(), vec2fcomp);
+	for (auto iterator = formulae.begin(); iterator != formulae.end();)
+	{
+		float theta = (*iterator)[0];
+		float intercept = (*iterator)[1];
+
+		for (auto iterator2 = iterator + 1; iterator2 != formulae.end();)
+		{
+			float theta2 = (*iterator2)[0];
+			float intercept2 = (*iterator2)[1];
+			if (theta == 0 || theta == 255)
+			{
+				if ((theta == theta2) && abs(intercept - intercept2) <= 10)
+					iterator2 = formulae.erase(iterator2);
+				else
+					iterator2++;
+			}	
+			else if (abs(theta - theta2) <= CV_PI / 180 && abs(intercept - intercept2) * cos(theta) <= 100)
+			{
+				iterator2 = formulae.erase(iterator2);
+			}
+			else
+			{
+				iterator2++;
+			}
+		}
+		iterator++;
+	}
 	for (size_t i = 0; i < formulae.size(); i++)
-	{ 
+	{
 		float theta = formulae[i][0];
-		float rho = formulae[i][1];
-		cout << "theta = " << theta << ",rho = " << rho << endl;
+		float intercept = formulae[i][1];
+		cout << "theta = " << theta * 180 / CV_PI << ",intercept = " << intercept * cos(theta) << endl;
 	}
 	return formulae;
 }
