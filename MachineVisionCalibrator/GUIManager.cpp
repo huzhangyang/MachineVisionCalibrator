@@ -40,14 +40,10 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 		}
 		else
 		{
-			if (theta > 45)
+			if (theta > 45 || theta < -45)
 				line(sourceImage, Point(intercept, 0), Point(intercept + sourceImage.rows / tan(theta / 180 * CV_PI), sourceImage.rows), color, thickness, CV_AA);//x as intercept
-			else if (theta > 0)
+			else 
 				line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept + sourceImage.cols * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//y as intercept
-			else if (theta > -45)
-				line(sourceImage, Point(0, intercept), Point(-intercept / tan(theta / 180 * CV_PI), 0), color, thickness, CV_AA);//y as intercept
-			else
-				line(sourceImage, Point(intercept, 0), Point(0, -intercept * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//x as intercept
 		}
 	}
 }
