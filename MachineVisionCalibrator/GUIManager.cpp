@@ -32,20 +32,20 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 		float theta = lines[i][0], intercept = lines[i][1];
 		if (theta == 0)
 		{
-			//line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept), color, thickness, CV_AA);//横线
+			line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept), color, thickness, CV_AA);//横线
 		}
 		else if (theta == 90)
 		{
-			//line(sourceImage, Point(intercept, 0), Point(intercept, sourceImage.rows), color, thickness, CV_AA);//竖线
+			line(sourceImage, Point(intercept, 0), Point(intercept, sourceImage.rows), color, thickness, CV_AA);//竖线
 		}
 		else
 		{
 			if (theta > 45)
-				;// line(sourceImage, Point(intercept, 0), Point(0, intercept * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//x as intercept
+				line(sourceImage, Point(intercept, 0), Point(intercept + sourceImage.rows / tan(theta / 180 * CV_PI), sourceImage.rows), color, thickness, CV_AA);//x as intercept
 			else if (theta > 0)
-				;// line(sourceImage, Point(0, intercept), Point(intercept / tan(theta / 180 * CV_PI), 0), color, thickness, CV_AA);//y as intercept
-			else if (theta > -45)//correct
-				;//line(sourceImage, Point(0, intercept), Point(-intercept / tan(theta / 180 * CV_PI), 0), color, thickness, CV_AA);//y as intercept
+				line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept + sourceImage.cols * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//y as intercept
+			else if (theta > -45)
+				line(sourceImage, Point(0, intercept), Point(-intercept / tan(theta / 180 * CV_PI), 0), color, thickness, CV_AA);//y as intercept
 			else
 				line(sourceImage, Point(intercept, 0), Point(0, -intercept * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//x as intercept
 		}

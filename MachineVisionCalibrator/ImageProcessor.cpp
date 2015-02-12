@@ -99,10 +99,10 @@ vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines)
 			optimizedLines.push_back(Vec4i(x1, y1, x2, y2));
 		}
 		else
-			cout << theta << "," << intercept << "is duplicate." << endl;
-
+		{
+			//cout << theta << "," << intercept << " is duplicate." << endl;
+		}
 	}
-	cout << lines.size() << " " << optimizedLines.size() << endl;
 	return optimizedLines;
 }
 
@@ -128,17 +128,15 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		else
 		{
 			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
-			if (abs(theta)> 45)
+			if (theta> 45 || theta < -45)
 				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
 			else
 				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
 		}
-		if (theta < -45)
-			formulae.push_back(Vec2f(theta, intercept));
+		formulae.push_back(Vec2f(theta, intercept));
 	}
 
-	sort(formulae.begin(), formulae.end(), vec2fcomp);
-	for (auto iterator = formulae.begin(); iterator != formulae.end();)
+	/*for (auto iterator = formulae.begin(); iterator != formulae.end();)
 	{
 		float theta = (*iterator)[0];
 		float intercept = (*iterator)[1];
@@ -157,12 +155,13 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 			}
 		}
 		iterator++;
-	}
+	}*/
+	sort(formulae.begin(), formulae.end(), vec2fcomp);
 	for (size_t i = 0; i < formulae.size(); i++)
 	{
 		float theta = formulae[i][0];
 		float intercept = formulae[i][1];
-		cout << "theta = " << theta << ",intercept = " << intercept << endl;
+		cout << "theta = " << cvRound(theta) << ",intercept = " << cvRound(intercept) << endl;
 	}
 	return formulae;
 }

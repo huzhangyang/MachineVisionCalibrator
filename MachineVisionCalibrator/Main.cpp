@@ -26,23 +26,16 @@ int main(int argc, char** argv)
 	//GUIManager::Instance()->CreateTrackBar("Multiplier", "Edge Image", &canny_multiplier, 10, OnChangeCannyParameter);
 	//GUIManager::Instance()->ShowImage("Edge Image", edgeImage);
 
-
-	sourceImage.copyTo(detectedImage);
-	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	optimizedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines);
-	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
-	
 	GUIManager::Instance()->CreateWindow("Optimized Image");
 	//GUIManager::Instance()->CreateTrackBar("MinVote", "Optimized Image", &hough_minvote, 10, OnChangeHoughParameter);
 	//GUIManager::Instance()->CreateTrackBar("MinLength", "Optimized Image", &hough_minlength, 10, OnChangeHoughParameter);
 	//GUIManager::Instance()->CreateTrackBar("MaxGap", "Optimized Image", &hough_maxgap, 20, OnChangeHoughParameter);
+	sourceImage.copyTo(detectedImage);
+	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
+	optimizedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines);
+	//GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
+	GUIManager::Instance()->DrawLines(detectedImage, ImageProcessor::Instance()->TransformLineFormula(optimizedLines), Scalar(0, 0, 255), 2);
 	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
-
-	GUIManager::Instance()->DrawLines(sourceImage, detectedLines, Scalar(0, 0, 255), 2);
-	GUIManager::Instance()->CreateWindow("Source Image");
-	GUIManager::Instance()->ShowImage("Source Image", sourceImage);
-
-
 
 	waitKey();
 	return 0;
