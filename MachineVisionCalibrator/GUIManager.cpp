@@ -34,13 +34,20 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 		{
 			//line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept), color, thickness, CV_AA);//ºáÏß
 		}
-		else if (theta == 255)
+		else if (theta == 90)
 		{
 			//line(sourceImage, Point(intercept, 0), Point(intercept, sourceImage.rows), color, thickness, CV_AA);//ÊúÏß
 		}
 		else
 		{
-			line(sourceImage, Point(0, intercept), Point(tan(theta) * sourceImage.cols + intercept, 0), color, thickness, CV_AA);
+			if (theta > 45)
+				;// line(sourceImage, Point(intercept, 0), Point(0, intercept * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//x as intercept
+			else if (theta > 0)
+				;// line(sourceImage, Point(0, intercept), Point(intercept / tan(theta / 180 * CV_PI), 0), color, thickness, CV_AA);//y as intercept
+			else if (theta > -45)//correct
+				;//line(sourceImage, Point(0, intercept), Point(-intercept / tan(theta / 180 * CV_PI), 0), color, thickness, CV_AA);//y as intercept
+			else
+				line(sourceImage, Point(intercept, 0), Point(0, -intercept * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//x as intercept
 		}
 	}
 }
@@ -54,7 +61,7 @@ void GUIManager::ShowImage(string title, Mat sourceImage)
 {
 	//resizeWindow(title, 800, 600);
 	imshow(title, sourceImage);
-	
+
 }
 
 void GUIManager::CreateTrackBar(string name, string windowTitle, int* value, int maxvalue, TrackbarCallback onChange)

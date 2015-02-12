@@ -52,6 +52,60 @@ vector<Vec2f> ImageProcessor::HoughLineTransform(Mat sourceImage, int threshold)
 	return lines;
 }
 
+vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines)
+{
+	vector<Vec2f> formulae;
+	vector<Vec4i> optimizedLines;
+
+
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		int x1 = lines[i][0];
+		int y1 = lines[i][1];
+		int x2 = lines[i][2];
+		int y2 = lines[i][3];
+		float theta, intercept;
+		bool isDuplicateLine = false;
+		if (y2 == y1)
+		{
+			theta = 0; intercept = y1;//horizontal
+		}
+		else if (x2 == x1)
+		{
+			theta = 90; intercept = x1;//vertical
+		}
+		else
+		{
+			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
+			if (abs(theta)> 45)
+				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
+			else
+				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
+		}
+
+		for (auto iterator = formulae.begin(); iterator != formulae.end(); iterator++)
+		{
+			float theta2 = (*iterator)[0];
+			float intercept2 = (*iterator)[1];
+			if (abs(theta - theta2) <= 5 && abs(intercept - intercept2) <= 50)
+			{
+				isDuplicateLine = true;
+				break;
+			}
+		}
+		if (!isDuplicateLine)
+		{
+			formulae.push_back(Vec2f(theta, intercept));
+			optimizedLines.push_back(Vec4i(x1, y1, x2, y2));
+		}
+		else
+			cout << theta << "," << intercept << "is duplicate." << endl;
+
+	}
+	cout << lines.size() << " " << optimizedLines.size() << endl;
+	return optimizedLines;
+}
+
 vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 {
 	vector<Vec2f> formulae;
@@ -65,21 +119,22 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		float theta, intercept;
 		if (y2 == y1)
 		{
-			theta = 0; intercept = y1;
+			theta = 0; intercept = y1;//horizontal
 		}
 		else if (x2 == x1)
 		{
-			theta = 255; intercept = x1;
+			theta = 90; intercept = x1;//vertical
 		}
 		else
 		{
-			theta = atan2(y2 - y1, x2 - x1);
-			int b1 = y1 - x1 * tan(theta);
-			int b2 = y2 - x2 * tan(theta);
-			intercept = (b1 + b2) / 2;
+			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
+			if (abs(theta)> 45)
+				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
+			else
+				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
 		}
-
-		formulae.push_back(Vec2f(theta, intercept));
+		if (theta < -45)
+			formulae.push_back(Vec2f(theta, intercept));
 	}
 
 	sort(formulae.begin(), formulae.end(), vec2fcomp);
@@ -92,14 +147,7 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		{
 			float theta2 = (*iterator2)[0];
 			float intercept2 = (*iterator2)[1];
-			if (theta == 0 || theta == 255)
-			{
-				if ((theta == theta2) && abs(intercept - intercept2) <= 10)
-					iterator2 = formulae.erase(iterator2);
-				else
-					iterator2++;
-			}	
-			else if (abs(theta - theta2) <= CV_PI / 180 && abs(intercept - intercept2) * cos(theta) <= 100)
+			if (abs(theta - theta2) <= 2 && abs(intercept - intercept2) <= 20)
 			{
 				iterator2 = formulae.erase(iterator2);
 			}
@@ -114,7 +162,7 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 	{
 		float theta = formulae[i][0];
 		float intercept = formulae[i][1];
-		cout << "theta = " << theta * 180 / CV_PI << ",intercept = " << intercept * cos(theta) << endl;
+		cout << "theta = " << theta << ",intercept = " << intercept << endl;
 	}
 	return formulae;
 }

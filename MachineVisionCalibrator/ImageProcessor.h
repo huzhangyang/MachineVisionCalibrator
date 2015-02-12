@@ -15,6 +15,7 @@ public:
 	vector<Vec2f> HoughLineTransform(Mat sourceImage, int threshold);
 	vector<Vec4i> HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap);
 	vector<Vec2f> TransformLineFormula(vector<Vec4i> lines);
+	vector<Vec4i> RemoveDuplicateLines(vector<Vec4i> lines);
 
 private:
 	ImageProcessor();

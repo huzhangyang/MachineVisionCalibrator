@@ -8,8 +8,7 @@ int hough_minlength = 5;
 int hough_maxgap = 20;
 
 Mat sourceImage, edgeImage, detectedImage;
-vector<Vec4i> detectedLines;
-vector<Vec2f> optimizedLines;
+vector<Vec4i> detectedLines,optimizedLines;
 void OnChangeCannyParameter(int, void*);
 void OnChangeHoughParameter(int, void*);
 
@@ -28,15 +27,20 @@ int main(int argc, char** argv)
 	//GUIManager::Instance()->ShowImage("Edge Image", edgeImage);
 
 
-	detectedImage = sourceImage;
+	sourceImage.copyTo(detectedImage);
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
+	optimizedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines);
 	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
-	GUIManager::Instance()->CreateWindow("Detected Image");
-	//GUIManager::Instance()->CreateTrackBar("MinVote", "Detected Image", &hough_minvote, 10, OnChangeHoughParameter);
-	//GUIManager::Instance()->CreateTrackBar("MinLength", "Detected Image", &hough_minlength, 10, OnChangeHoughParameter);
-	//GUIManager::Instance()->CreateTrackBar("MaxGap", "Detected Image", &hough_maxgap, 20, OnChangeHoughParameter);
-	GUIManager::Instance()->ShowImage("Detected Image", detectedImage);
+	
+	GUIManager::Instance()->CreateWindow("Optimized Image");
+	//GUIManager::Instance()->CreateTrackBar("MinVote", "Optimized Image", &hough_minvote, 10, OnChangeHoughParameter);
+	//GUIManager::Instance()->CreateTrackBar("MinLength", "Optimized Image", &hough_minlength, 10, OnChangeHoughParameter);
+	//GUIManager::Instance()->CreateTrackBar("MaxGap", "Optimized Image", &hough_maxgap, 20, OnChangeHoughParameter);
+	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
+
+	GUIManager::Instance()->DrawLines(sourceImage, detectedLines, Scalar(0, 0, 255), 2);
+	GUIManager::Instance()->CreateWindow("Source Image");
+	GUIManager::Instance()->ShowImage("Source Image", sourceImage);
 
 
 
@@ -52,9 +56,10 @@ void OnChangeCannyParameter(int, void*)
 
 void OnChangeHoughParameter(int, void*)
 {
-	detectedImage = sourceImage;
+	sourceImage.copyTo(detectedImage);
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	GUIManager::Instance()->DrawLines(detectedImage, detectedLines, Scalar(0, 0, 255), 2);
-	GUIManager::Instance()->ShowImage("Detected Image", detectedImage);
+	optimizedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines);
+	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
+	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
 	
 }
