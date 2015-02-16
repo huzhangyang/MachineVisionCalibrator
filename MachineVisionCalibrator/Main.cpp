@@ -8,13 +8,14 @@ int hough_minlength = 5;
 int hough_maxgap = 20;
 
 Mat sourceImage, edgeImage, detectedImage;
-vector<Vec4i> detectedLines,optimizedLines;
+vector<Vec4i> detectedLines;
+vector<Vec2f> optimizedLines;
 void OnChangeCannyParameter(int, void*);
 void OnChangeHoughParameter(int, void*);
 
 int main(int argc, char** argv)
 {
-	const char* filename = argc >= 2 ? argv[1] : "test.jpg";
+	const char* filename = argc >= 2 ? argv[1] : "test2.jpg";
 
 	sourceImage = IOManager::Instance()->ReadImage(filename);
 	//GUIManager::Instance()->CreateWindow("Source Image");
@@ -30,13 +31,8 @@ int main(int argc, char** argv)
 	//GUIManager::Instance()->CreateTrackBar("MinVote", "Optimized Image", &hough_minvote, 10, OnChangeHoughParameter);
 	//GUIManager::Instance()->CreateTrackBar("MinLength", "Optimized Image", &hough_minlength, 10, OnChangeHoughParameter);
 	//GUIManager::Instance()->CreateTrackBar("MaxGap", "Optimized Image", &hough_maxgap, 20, OnChangeHoughParameter);
-	sourceImage.copyTo(detectedImage);
-	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	optimizedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines);
-	//GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
-	GUIManager::Instance()->DrawLines(detectedImage, ImageProcessor::Instance()->TransformLineFormula(optimizedLines), Scalar(0, 0, 255), 2);
-	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
 
+	OnChangeHoughParameter(0, 0);//execute callback at start
 	waitKey();
 	return 0;
 }
@@ -51,8 +47,9 @@ void OnChangeHoughParameter(int, void*)
 {
 	sourceImage.copyTo(detectedImage);
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	optimizedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines);
+	detectedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines, 5, 50);
+	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
+	optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
 	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
 	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
-	
 }

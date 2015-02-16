@@ -52,11 +52,10 @@ vector<Vec2f> ImageProcessor::HoughLineTransform(Mat sourceImage, int threshold)
 	return lines;
 }
 
-vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines)
+vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision)
 {
 	vector<Vec2f> formulae;
 	vector<Vec4i> optimizedLines;
-
 
 	for (size_t i = 0; i < lines.size(); i++)
 	{
@@ -87,7 +86,7 @@ vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines)
 		{
 			float theta2 = (*iterator)[0];
 			float intercept2 = (*iterator)[1];
-			if (abs(theta - theta2) <= 5 && abs(intercept - intercept2) <= 50)
+			if (abs(theta - theta2) <= thetaPrecision && abs(intercept - intercept2) <= interceptPrecision)
 			{
 				isDuplicateLine = true;
 				break;
@@ -104,6 +103,34 @@ vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines)
 		}
 	}
 	return optimizedLines;
+}
+
+vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
+{
+	vector<Vec2f> optimizedLines;
+	//TODO 去除那些没有相似者的线段
+	for (auto iterator = lines.begin(); iterator != lines.end();)
+	{
+		float theta = (*iterator)[0];
+		if (theta < 0)theta += 180;
+		int similarLineCount = 0;
+
+		for (auto iterator2 = lines.begin(); iterator2 != lines.end(); iterator2++)
+		{
+			float theta2 = (*iterator2)[0];
+			if (theta2 < 0)theta2 += 180;
+			if (abs(theta - theta2) <= 10)
+			{
+				similarLineCount++;
+			}
+		}
+		if (similarLineCount <= 3)
+			iterator = lines.erase(iterator);
+		else
+			iterator++;
+	}
+	//TODO 检测那些相似线段中间有没有缺的（or直接求交点，再补充缺失的交点？）
+	return lines;
 }
 
 vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
@@ -136,26 +163,6 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		formulae.push_back(Vec2f(theta, intercept));
 	}
 
-	/*for (auto iterator = formulae.begin(); iterator != formulae.end();)
-	{
-		float theta = (*iterator)[0];
-		float intercept = (*iterator)[1];
-
-		for (auto iterator2 = iterator + 1; iterator2 != formulae.end();)
-		{
-			float theta2 = (*iterator2)[0];
-			float intercept2 = (*iterator2)[1];
-			if (abs(theta - theta2) <= 2 && abs(intercept - intercept2) <= 20)
-			{
-				iterator2 = formulae.erase(iterator2);
-			}
-			else
-			{
-				iterator2++;
-			}
-		}
-		iterator++;
-	}*/
 	sort(formulae.begin(), formulae.end(), vec2fcomp);
 	for (size_t i = 0; i < formulae.size(); i++)
 	{
