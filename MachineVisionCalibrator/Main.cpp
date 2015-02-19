@@ -10,6 +10,7 @@ int hough_maxgap = 20;
 Mat sourceImage, edgeImage, detectedImage;
 vector<Vec4i> detectedLines;
 vector<Vec2f> optimizedLines;
+vector<Point> interscetionPoints;
 void OnChangeCannyParameter(int, void*);
 void OnChangeHoughParameter(int, void*);
 
@@ -49,7 +50,9 @@ void OnChangeHoughParameter(int, void*)
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
 	detectedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines, 5, 50);
 	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
-	optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
+	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
+	//optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
 	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
+	GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0));
 	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
 }

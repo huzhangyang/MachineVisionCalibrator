@@ -42,9 +42,17 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 		{
 			if (theta > 45 || theta < -45)
 				line(sourceImage, Point(intercept, 0), Point(intercept + sourceImage.rows / tan(theta / 180 * CV_PI), sourceImage.rows), color, thickness, CV_AA);//x as intercept
-			else 
+			else
 				line(sourceImage, Point(0, intercept), Point(sourceImage.cols, intercept + sourceImage.cols * tan(theta / 180 * CV_PI)), color, thickness, CV_AA);//y as intercept
 		}
+	}
+}
+
+void GUIManager::DrawPoints(Mat sourceImage, vector<Point> points, Scalar color)
+{
+	for (int i = 0; i < points.size(); i++)
+	{
+		circle(sourceImage, points[i], 10, color, CV_FILLED);
 	}
 }
 

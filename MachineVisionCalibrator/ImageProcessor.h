@@ -17,7 +17,7 @@ public:
 	vector<Vec2f> TransformLineFormula(vector<Vec4i> lines);
 	vector<Vec4i> RemoveDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision);
 	vector<Vec2f> AddUndetectedLines(vector<Vec2f> lines);
-
+	vector<Point> GetIntersectionPoints(vector<Vec2f>lines);
 private:
 	ImageProcessor();
 };
