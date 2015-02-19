@@ -220,17 +220,34 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	//calculate interscetion points
 	for (size_t i = 0; i < verticalLines.size(); i++)
 	{
-		float k1 = tan(verticalLines[i][0] / 180 * CV_PI);//k =tan(theta)
-		float b1 = -verticalLines[i][1] * k1;//intercept = -b/k
-		for (size_t j = 0; j < horizontalLines.size(); j++)
+		if (verticalLines[i][0] == 90)
 		{
-			float k2 = tan(horizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
-			float b2 = horizontalLines[j][1];//intercept = b
+			float intercept = verticalLines[i][1];
+			for (size_t j = 0; j < horizontalLines.size(); j++)
+			{
+				float k2 = tan(horizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
+				float b2 = horizontalLines[j][1];//intercept = b
 
-			float x = (b2 - b1) / (k1 - k2);
-			float y = k1* x + b1;
-			interscetionPoints.push_back(Point(x, y));
-			cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+				float x = intercept;
+				float y = k2* x + b2;
+				interscetionPoints.push_back(Point(x, y));
+				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+			}
+		}
+		else
+		{
+			float k1 = tan(verticalLines[i][0] / 180 * CV_PI);//k =tan(theta)
+			float b1 = -verticalLines[i][1] * k1;//intercept = -b/k
+			for (size_t j = 0; j < horizontalLines.size(); j++)
+			{
+				float k2 = tan(horizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
+				float b2 = horizontalLines[j][1];//intercept = b
+
+				float x = (b2 - b1) / (k1 - k2);
+				float y = k1* x + b1;
+				interscetionPoints.push_back(Point(x, y));
+				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+			}
 		}
 		cout << endl;
 	}
