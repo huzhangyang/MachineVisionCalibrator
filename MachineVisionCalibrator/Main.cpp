@@ -34,6 +34,8 @@ int main(int argc, char** argv)
 	//GUIManager::Instance()->CreateTrackBar("MaxGap", "Optimized Image", &hough_maxgap, 20, OnChangeHoughParameter);
 
 	OnChangeHoughParameter(0, 0);//execute callback at start
+
+	//IOManager::Instance()->OutputResult(interscetionPoints, "out.txt");
 	waitKey();
 	return 0;
 }

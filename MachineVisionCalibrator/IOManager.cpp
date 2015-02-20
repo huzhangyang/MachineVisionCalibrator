@@ -22,6 +22,24 @@ Mat IOManager::ReadImage(string filename)
 	if (image.empty())
 	{
 		cout << "can not open " << filename << endl;
+		exit(0);
 	}
 	return image;
+}
+
+void IOManager::OutputResult(vector<Point> points, string filename)
+{
+	ofstream output(filename);
+	if (!output)
+	{
+		cout << "can not open " << filename << endl;
+		exit(0);
+	}
+	for (size_t i = 0; i < points.size(); i++)
+	{
+		int x = cvRound(points[i].x);
+		int y = cvRound(points[i].y);
+		output << "(" << x << "," << y<< ") "<<endl;
+	}
+	output.close();
 }
