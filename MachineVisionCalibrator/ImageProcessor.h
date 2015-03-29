@@ -15,7 +15,8 @@ public:
 	vector<Vec2f> HoughLineTransform(Mat sourceImage, int threshold);
 	vector<Vec4i> HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap);
 	vector<Vec2f> TransformLineFormula(vector<Vec4i> lines);
-	vector<Vec4i> RemoveDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision);
+	vector<Vec4i> MergeDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision);
+	vector<Vec2f> RemoveIndependentLines(vector<Vec2f> lines);
 	vector<Vec2f> AddUndetectedLines(vector<Vec2f> lines);
 	vector<Point> GetIntersectionPoints(vector<Vec2f>lines);
 private:

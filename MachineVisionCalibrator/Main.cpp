@@ -50,10 +50,11 @@ void OnChangeHoughParameter(int, void*)
 {
 	sourceImage.copyTo(detectedImage);
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	detectedLines = ImageProcessor::Instance()->RemoveDuplicateLines(detectedLines, 5, 50);
+	detectedLines = ImageProcessor::Instance()->MergeDuplicateLines(detectedLines, 5, 50);
 	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
-	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
+	//optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines);
 	//optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
+	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
 	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
 	GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0));
 	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);

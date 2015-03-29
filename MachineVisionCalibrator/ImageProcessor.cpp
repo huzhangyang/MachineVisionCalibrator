@@ -43,13 +43,6 @@ Mat ImageProcessor::ConvertColorToGray(Mat sourceImage)
 	return outputImage;
 }
 
-vector<Vec4i> ImageProcessor::HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap)
-{
-	vector<Vec4i> lines;
-	HoughLinesP(sourceImage, lines, 1, CV_PI / 180, minVote, minLength, maxGap);
-	return lines;
-}
-
 vector<Vec2f> ImageProcessor::HoughLineTransform(Mat sourceImage, int threshold)
 {
 	vector<Vec2f> lines;
@@ -57,7 +50,54 @@ vector<Vec2f> ImageProcessor::HoughLineTransform(Mat sourceImage, int threshold)
 	return lines;
 }
 
-vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision)
+vector<Vec4i> ImageProcessor::HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap)
+{
+	vector<Vec4i> lines;
+	HoughLinesP(sourceImage, lines, 1, CV_PI / 180, minVote, minLength, maxGap);
+	return lines;
+}
+
+vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
+{
+	vector<Vec2f> formulae;
+
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		int x1 = lines[i][0];
+		int y1 = lines[i][1];
+		int x2 = lines[i][2];
+		int y2 = lines[i][3];
+		float theta, intercept;
+		if (y2 == y1)
+		{
+			theta = 0; intercept = y1;//horizontal
+		}
+		else if (x2 == x1)
+		{
+			theta = 90; intercept = x1;//vertical
+		}
+		else
+		{
+			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
+			if (theta> 45 || theta < -45)
+				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
+			else
+				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
+		}
+		formulae.push_back(Vec2f(theta, intercept));
+	}
+
+	sort(formulae.begin(), formulae.end(), vec2fcomp);
+	for (size_t i = 0; i < formulae.size(); i++)
+	{
+		float theta = formulae[i][0];
+		float intercept = formulae[i][1];
+		cout << "theta = " << cvRound(theta) << ",intercept = " << cvRound(intercept) << endl;
+	}
+	return formulae;
+}
+
+vector<Vec4i> ImageProcessor::MergeDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision)
 {
 	vector<Vec2f> formulae;
 	vector<Vec4i> optimizedLines;
@@ -110,10 +150,17 @@ vector<Vec4i> ImageProcessor::RemoveDuplicateLines(vector<Vec4i> lines, int thet
 	return optimizedLines;
 }
 
+vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
+{
+	vector<Vec2f> optimizedLines = lines;
+	//TODO 去除那些没有相似者的线段
+	return optimizedLines;
+}
+
 vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines;
-	//TODO 去除那些没有相似者的线段
+	
 	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
 	{
 		float theta = (*iterator)[0];
@@ -157,50 +204,12 @@ vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 			}
 		}
 	}
-	//TODO 检测那些相似线段中间有没有缺的（or直接求交点，再补充缺失的交点？）
+	//TODO 检测那些相似线段中间有没有缺的
 	cout << "Lines:" << optimizedLines.size() << endl;
 	return optimizedLines;
 }
 
-vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
-{
-	vector<Vec2f> formulae;
 
-	for (size_t i = 0; i < lines.size(); i++)
-	{
-		int x1 = lines[i][0];
-		int y1 = lines[i][1];
-		int x2 = lines[i][2];
-		int y2 = lines[i][3];
-		float theta, intercept;
-		if (y2 == y1)
-		{
-			theta = 0; intercept = y1;//horizontal
-		}
-		else if (x2 == x1)
-		{
-			theta = 90; intercept = x1;//vertical
-		}
-		else
-		{
-			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
-			if (theta> 45 || theta < -45)
-				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
-			else
-				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
-		}
-		formulae.push_back(Vec2f(theta, intercept));
-	}
-
-	sort(formulae.begin(), formulae.end(), vec2fcomp);
-	for (size_t i = 0; i < formulae.size(); i++)
-	{
-		float theta = formulae[i][0];
-		float intercept = formulae[i][1];
-		cout << "theta = " << cvRound(theta) << ",intercept = " << cvRound(intercept) << endl;
-	}
-	return formulae;
-}
 
 vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 {
@@ -208,6 +217,7 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	vector<Vec2f> verticalLines;
 	vector<Vec2f> horizontalLines;
 	//split lines into vertical and horizontal
+	//TODO应该将线分成四段，并分别计算
 	for (size_t i = 0; i < lines.size(); i++)
 	{
 		float theta = lines[i][0];
