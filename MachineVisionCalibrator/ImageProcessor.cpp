@@ -57,7 +57,7 @@ vector<Vec4i> ImageProcessor::HoughLineTransformP(Mat sourceImage, int minVote, 
 	return lines;
 }
 
-vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
+vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sortLines)
 {
 	vector<Vec2f> formulae;
 
@@ -87,7 +87,8 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		formulae.push_back(Vec2f(theta, intercept));
 	}
 
-	sort(formulae.begin(), formulae.end(), vec2fcomp);
+	if (sortLines)
+		sort(formulae.begin(), formulae.end(), vec2fcomp);
 	for (size_t i = 0; i < formulae.size(); i++)
 	{
 		float theta = formulae[i][0];
@@ -97,37 +98,16 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 	return formulae;
 }
 
-vector<Vec4i> ImageProcessor::MergeDuplicateLines(vector<Vec4i> lines, int thetaPrecision, int interceptPrecision)
+vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision)
 {
-	vector<Vec2f> formulae;
-	vector<Vec4i> optimizedLines;
+	vector<Vec2f> optimizedLines;
 
-	for (size_t i = 0; i < lines.size(); i++)
+	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
 	{
-		int x1 = lines[i][0];
-		int y1 = lines[i][1];
-		int x2 = lines[i][2];
-		int y2 = lines[i][3];
-		float theta, intercept;
+		float theta = (*iterator)[0];
+		float intercept = (*iterator)[1];
 		bool isDuplicateLine = false;
-		if (y2 == y1)
-		{
-			theta = 0; intercept = y1;//horizontal
-		}
-		else if (x2 == x1)
-		{
-			theta = 90; intercept = x1;//vertical
-		}
-		else
-		{
-			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
-			if (abs(theta)> 45)
-				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
-			else
-				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
-		}
-
-		for (auto iterator = formulae.begin(); iterator != formulae.end(); iterator++)
+		for (auto iterator = optimizedLines.begin(); iterator != optimizedLines.end(); iterator++)
 		{
 			float theta2 = (*iterator)[0];
 			float intercept2 = (*iterator)[1];
@@ -138,29 +118,22 @@ vector<Vec4i> ImageProcessor::MergeDuplicateLines(vector<Vec4i> lines, int theta
 			}
 		}
 		if (!isDuplicateLine)
-		{
-			formulae.push_back(Vec2f(theta, intercept));
-			optimizedLines.push_back(Vec4i(x1, y1, x2, y2));
+		{//对于duplicateline，应该求和取平均值
+			optimizedLines.push_back(Vec2f(theta, intercept));
 		}
 		else
 		{
 			//cout << theta << "," << intercept << " is duplicate." << endl;
 		}
 	}
+
 	return optimizedLines;
 }
 
 vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines = lines;
-	//TODO 去除那些没有相似者的线段
-	return optimizedLines;
-}
-
-vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
-{
-	vector<Vec2f> optimizedLines;
-	
+	//TODO 去除那些没有相似者的线段，应该有更好的算法
 	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
 	{
 		float theta = (*iterator)[0];
@@ -204,12 +177,17 @@ vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 			}
 		}
 	}
+
+	return optimizedLines;
+}
+
+vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
+{
+	vector<Vec2f> optimizedLines;
 	//TODO 检测那些相似线段中间有没有缺的
 	cout << "Lines:" << optimizedLines.size() << endl;
 	return optimizedLines;
 }
-
-
 
 vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 {

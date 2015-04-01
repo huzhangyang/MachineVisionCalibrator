@@ -63,9 +63,7 @@ void GUIManager::CreateWindow(string title)
 
 void GUIManager::ShowImage(string title, Mat sourceImage)
 {
-	//resizeWindow(title, 800, 600);
 	imshow(title, sourceImage);
-
 }
 
 void GUIManager::CreateTrackBar(string name, string windowTitle, int* value, int maxvalue, TrackbarCallback onChange)

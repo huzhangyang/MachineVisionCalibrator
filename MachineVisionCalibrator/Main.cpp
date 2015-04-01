@@ -17,16 +17,25 @@ void OnChangeHoughParameter(int, void*);
 int main(int argc, char** argv)
 {
 	const char* filename = argc >= 2 ? argv[1] : "test2.jpg";
+	bool showSourceImage = false;
+	bool showEdgeImage = false;
+	bool outputResult = false;
 
 	sourceImage = IOManager::Instance()->ReadImage(filename);
-	//GUIManager::Instance()->CreateWindow("Source Image");
-	//GUIManager::Instance()->ShowImage("Source Image", sourceImage);
+	if (showSourceImage)
+	{
+		GUIManager::Instance()->CreateWindow("Source Image");
+		GUIManager::Instance()->ShowImage("Source Image", sourceImage);
+	}
 
 	edgeImage = ImageProcessor::Instance()->CannyEdgeDetect(sourceImage, canny_threshold * 10, canny_multiplier);
-	//GUIManager::Instance()->CreateWindow("Edge Image");
-	//GUIManager::Instance()->CreateTrackBar("Threshold", "Edge Image", &canny_threshold, 10, OnChangeCannyParameter);
-	//GUIManager::Instance()->CreateTrackBar("Multiplier", "Edge Image", &canny_multiplier, 10, OnChangeCannyParameter);
-	//GUIManager::Instance()->ShowImage("Edge Image", edgeImage);
+	if (showEdgeImage)
+	{
+		GUIManager::Instance()->CreateWindow("Edge Image");
+		GUIManager::Instance()->CreateTrackBar("Threshold", "Edge Image", &canny_threshold, 10, OnChangeCannyParameter);
+		GUIManager::Instance()->CreateTrackBar("Multiplier", "Edge Image", &canny_multiplier, 10, OnChangeCannyParameter);
+		GUIManager::Instance()->ShowImage("Edge Image", edgeImage);
+	}
 
 	GUIManager::Instance()->CreateWindow("Optimized Image");
 	//GUIManager::Instance()->CreateTrackBar("MinVote", "Optimized Image", &hough_minvote, 10, OnChangeHoughParameter);
@@ -35,7 +44,8 @@ int main(int argc, char** argv)
 
 	OnChangeHoughParameter(0, 0);//execute callback at start
 
-	//IOManager::Instance()->OutputResult(interscetionPoints, "out.txt");
+	if (outputResult)
+		IOManager::Instance()->OutputResult(interscetionPoints, "out.txt");
 	waitKey();
 	return 0;
 }
@@ -50,8 +60,8 @@ void OnChangeHoughParameter(int, void*)
 {
 	sourceImage.copyTo(detectedImage);
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	detectedLines = ImageProcessor::Instance()->MergeDuplicateLines(detectedLines, 5, 50);
-	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
+	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines, false);
+	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, 50);
 	//optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines);
 	//optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
 	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
