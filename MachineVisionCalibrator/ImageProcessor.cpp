@@ -57,6 +57,12 @@ vector<Vec4i> ImageProcessor::HoughLineTransformP(Mat sourceImage, int minVote, 
 	return lines;
 }
 
+/*
+	转换直线公式。直接由概率霍夫变换求得的公式是以Vec4i的线段格式表示的，将其转换为Vec2f的直线表示。
+	使用theta代表直线与X轴的夹角（第一象限是(0,90)，第三象限是(0,-90)）。
+	使用intercept代表截距。其中0~45（-45）使用Y轴截距，其余使用X轴截距。
+	对直线按照theta，intercept的顺序进行排序。
+*/
 vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sortLines)
 {
 	vector<Vec2f> formulae;
@@ -89,6 +95,8 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sor
 
 	if (sortLines)
 		sort(formulae.begin(), formulae.end(), vec2fcomp);
+
+	//output tranformed line formula
 	for (size_t i = 0; i < formulae.size(); i++)
 	{
 		float theta = formulae[i][0];
@@ -98,6 +106,9 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sor
 	return formulae;
 }
 
+/*
+	合并重复的直线。
+*/
 vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision)
 {
 	vector<Vec2f> optimizedLines;
@@ -118,7 +129,7 @@ vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int theta
 			}
 		}
 		if (!isDuplicateLine)
-		{//对于duplicateline，应该求和取平均值
+		{//TODO 对于duplicateline，应该求和取平均值
 			optimizedLines.push_back(Vec2f(theta, intercept));
 		}
 		else
@@ -130,6 +141,9 @@ vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int theta
 	return optimizedLines;
 }
 
+/*
+	移除独立的直线。
+*/
 vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines = lines;
@@ -181,6 +195,10 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
 	return optimizedLines;
 }
 
+
+/*
+	添加遗漏的直线。
+*/
 vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines;
@@ -189,6 +207,9 @@ vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 	return optimizedLines;
 }
 
+/*
+求取直线的焦点
+*/
 vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 {
 	vector<Point> interscetionPoints;
