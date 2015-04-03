@@ -9,4 +9,6 @@
 #include <string>
 using namespace std;
 
+#define DEBUG 0;
+
 #endif 

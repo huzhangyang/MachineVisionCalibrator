@@ -101,13 +101,16 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sor
 	{
 		float theta = formulae[i][0];
 		float intercept = formulae[i][1];
+#if DEBUG
 		cout << "theta = " << cvRound(theta) << ",intercept = " << cvRound(intercept) << endl;
+#endif
 	}
 	return formulae;
 }
 
 /*
 	合并重复的直线。
+	//TODO 对于duplicateline，应该求其加权平均值
 */
 vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision)
 {
@@ -129,12 +132,14 @@ vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int theta
 			}
 		}
 		if (!isDuplicateLine)
-		{//TODO 对于duplicateline，应该求和取平均值
+		{
 			optimizedLines.push_back(Vec2f(theta, intercept));
 		}
 		else
 		{
-			//cout << theta << "," << intercept << " is duplicate." << endl;
+#if DEBUG
+			cout << theta << "," << intercept << " is duplicate." << endl;
+#endif
 		}
 	}
 
@@ -143,16 +148,17 @@ vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int theta
 
 /*
 	移除独立的直线。
+	//TODO 去除那些没有相似者的线段，应该有更好的算法
 */
 vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines = lines;
-	//TODO 去除那些没有相似者的线段，应该有更好的算法
+	
 	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
 	{
 		float theta = (*iterator)[0];
 		float intercept = (*iterator)[1];
-		if (theta < 0)theta += 180;
+		if (theta < 0)theta += 180;//patch theta.is it needed?
 		vector<Vec2f> similarLines;
 		similarLines.push_back(Vec2f(theta, intercept));
 		//找出相似的线段
@@ -209,6 +215,7 @@ vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 
 /*
 求取直线的焦点
+//TODO应该将线分成四段，并分别计算
 */
 vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 {
@@ -216,7 +223,6 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	vector<Vec2f> verticalLines;
 	vector<Vec2f> horizontalLines;
 	//split lines into vertical and horizontal
-	//TODO应该将线分成四段，并分别计算
 	for (size_t i = 0; i < lines.size(); i++)
 	{
 		float theta = lines[i][0];
@@ -226,6 +232,12 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 		else
 			horizontalLines.push_back(Vec2f(theta, intercept));
 	}
+	//check if each type of lines is at its correct count
+	if (horizontalLines.size() != 22)
+		cout << "horizontalLinesCount = " << horizontalLines.size() << ", was expecting 22, might output wrong result."<<endl;
+	if (verticalLines.size() != 21)
+		cout << "verticalLinesCount = " << verticalLines.size() << ", was expecting 21, might output wrong result." << endl;
+	
 	//calculate interscetion points
 	for (size_t i = 0; i < verticalLines.size(); i++)
 	{
@@ -240,7 +252,9 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 				float x = intercept;
 				float y = k2* x + b2;
 				interscetionPoints.push_back(Point(x, y));
+#if DEBUG
 				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+#endif
 			}
 		}
 		else
@@ -254,8 +268,10 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 
 				float x = (b2 - b1) / (k1 - k2);
 				float y = k1* x + b1;
-				interscetionPoints.push_back(Point(x, y));
+				interscetionPoints.push_back(Point(x, y)); 
+#if DEBUG
 				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+#endif
 			}
 		}
 		cout << endl;
