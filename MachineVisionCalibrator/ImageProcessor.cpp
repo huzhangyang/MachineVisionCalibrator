@@ -148,53 +148,31 @@ vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int theta
 
 /*
 	移除独立的直线。
-	//TODO 去除那些没有相似者的线段，应该有更好的算法
+	对于每一条直线，寻找其相似者（theta相近的），相似者过少的，为独立的直线，删去。
 */
-vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
+vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int thetaPrecision, int threshold)
 {
 	vector<Vec2f> optimizedLines = lines;
 	
-	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
+	for (auto iterator = optimizedLines.begin(); iterator != optimizedLines.end(); iterator++)
 	{
 		float theta = (*iterator)[0];
 		float intercept = (*iterator)[1];
-		if (theta < 0)theta += 180;//patch theta.is it needed?
 		vector<Vec2f> similarLines;
 		similarLines.push_back(Vec2f(theta, intercept));
 		//找出相似的线段
-		for (auto iterator2 = lines.begin(); iterator2 != lines.end(); iterator2++)
+		for (auto iterator2 = optimizedLines.begin(); iterator2 != optimizedLines.end(); iterator2++)
 		{
 			float theta2 = (*iterator2)[0];
 			float intercept2 = (*iterator2)[1];
-			if (theta2 < 0)theta2 += 180;
-			if (abs(theta - theta2) <= 10)
+			if (abs(theta - theta2) <= thetaPrecision)
 			{
 				similarLines.push_back(Vec2f(theta2, intercept2));
 			}
 		}
-		if (similarLines.size() > 3)
+		if (similarLines.size() < threshold)
 		{
-			vector<float>distances;
-			float averageDistance;
-			sort(similarLines.begin(), similarLines.end(), interceptcomp);
-			for (int i = 0; i < similarLines.size() - 1; i++)
-			{
-				distances.push_back(similarLines[i + 1][1] - similarLines[i][1]);
-			}
-			for (auto iterator2 = distances.begin() + 1; iterator2 != distances.end(); iterator2++)
-			{
-				float distance1 = *iterator2 - 1;
-				float distance2 = *iterator2;
-				for (int j = 0; j < distances.size(); j++)
-				{
-					if (abs(distances[j] - distance1) > 10 && abs(distances[j] - distance2) > 10)
-					{//存在一条线的前后距离都比其它的明显要短，则它是多余的线
-						iterator2 = distances.erase(iterator2);
-						break;
-					}
-
-				}
-			}
+			iterator = optimizedLines.erase(iterator);
 		}
 	}
 
@@ -204,6 +182,8 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines)
 
 /*
 	添加遗漏的直线。
+	首先需要想办法得知平均直线间距。是否需要在这里就将直线分割成四段处理？否则横线恐怕是很难办。
+	若间距小于平均间距，则是多余直线。若间距大于平均间距，则是遗漏直线。
 */
 vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 {

@@ -63,7 +63,7 @@ void OnChangeHoughParameter(int, void*)
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
 	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines, false);
 	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, 50);
-	//optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines);
+	optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines, 10, 5);
 	//optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
 	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
 	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
