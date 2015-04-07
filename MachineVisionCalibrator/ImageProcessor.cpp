@@ -63,7 +63,7 @@ vector<Vec4i> ImageProcessor::HoughLineTransformP(Mat sourceImage, int minVote, 
 	使用intercept代表截距。其中0~45（-45）使用Y轴截距，其余使用X轴截距。
 	对直线按照theta，intercept的顺序进行排序。
 */
-vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sortLines)
+vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 {
 	vector<Vec2f> formulae;
 
@@ -92,19 +92,15 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines, bool sor
 		}
 		formulae.push_back(Vec2f(theta, intercept));
 	}
-
-	if (sortLines)
-		sort(formulae.begin(), formulae.end(), vec2fcomp);
-
 	//output tranformed line formula
+#if DEBUG
 	for (size_t i = 0; i < formulae.size(); i++)
 	{
 		float theta = formulae[i][0];
 		float intercept = formulae[i][1];
-#if DEBUG
 		cout << "theta = " << cvRound(theta) << ",intercept = " << cvRound(intercept) << endl;
-#endif
 	}
+#endif
 	return formulae;
 }
 
@@ -182,20 +178,21 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int th
 
 /*
 	添加遗漏的直线。
-	首先需要想办法得知平均直线间距。是否需要在这里就将直线分割成四段处理？否则横线恐怕是很难办。
+	首先需要想办法得知平均直线间距，需要假定数据中的边缘直线是真正的边缘直线。
+	使用最左最右两条竖线，得知纵向平均直线间距，可以认为其基本等于横向平均直线间距。
 	若间距小于平均间距，则是多余直线。若间距大于平均间距，则是遗漏直线。
+	但横向的问题还是要分开处理？
 */
 vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines;
-	//TODO 检测那些相似线段中间有没有缺的
-	cout << "Lines:" << optimizedLines.size() << endl;
+	sort(lines.begin(), lines.end(), vec2fcomp);
 	return optimizedLines;
 }
 
 /*
 	求取直线的交点
-	//TODO应该将线分成四段，并分别计算
+	将线分成四段，并分别计算左边横线与纵线，右边横线与纵线的交点
 */
 vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 {

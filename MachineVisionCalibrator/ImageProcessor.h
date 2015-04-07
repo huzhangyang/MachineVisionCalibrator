@@ -14,7 +14,7 @@ public:
 	Mat ConvertColorToGray(Mat sourceImage);
 	vector<Vec2f> HoughLineTransform(Mat sourceImage, int threshold);
 	vector<Vec4i> HoughLineTransformP(Mat sourceImage, int minVote, int minLength, int maxGap);
-	vector<Vec2f> TransformLineFormula(vector<Vec4i> lines, bool sortLines = true);
+	vector<Vec2f> TransformLineFormula(vector<Vec4i> lines);
 	vector<Vec2f> MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision);
 	vector<Vec2f> RemoveIndependentLines(vector<Vec2f> lines, int thetaPrecision, int threshold);
 	vector<Vec2f> AddUndetectedLines(vector<Vec2f> lines);

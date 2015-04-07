@@ -61,7 +61,7 @@ void OnChangeHoughParameter(int, void*)
 {
 	sourceImage.copyTo(detectedImage);
 	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
-	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines, false);
+	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
 	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, 50);
 	optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines, 10, 5);
 	//optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
