@@ -85,7 +85,7 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 		else
 		{
 			theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
-			if (theta> 45 || theta < -45)
+			if (theta > 45 || theta < -45)
 				intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
 			else
 				intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
@@ -175,7 +175,6 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int th
 	return optimizedLines;
 }
 
-
 /*
 	添加遗漏的直线。
 	首先需要想办法得知平均直线间距，需要假定数据中的边缘直线是真正的边缘直线。
@@ -186,8 +185,24 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int th
 vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 {
 	vector<Vec2f> optimizedLines;
+
+	// calculate avgLineGap
+	int maxIntercept = -65535;
+	int minIntercept = 65535;
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		float theta = lines[i][0];
+		float intercept = lines[i][1];
+		if (theta > 45 || theta < -45)//vertical
+		{
+			if (intercept < minIntercept)minIntercept = intercept;
+			else if (intercept > maxIntercept)maxIntercept = intercept;
+		}
+	}
+	int avgLineGap = (maxIntercept - minIntercept) / 20;
+	//check line gaps
 	sort(lines.begin(), lines.end(), vec2fcomp);
-	return optimizedLines;
+	return lines;
 }
 
 /*
@@ -207,11 +222,11 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	{
 		float theta = lines[i][0];
 		float intercept = lines[i][1];
-		if (theta > 0 && theta < 45)
+		if (theta >= 0 && theta <= 45)
 		{
 			rightHorizontalLines.push_back(Vec2f(theta, intercept));
 		}
-		else if (theta < 0 && theta > -45)
+		else if (theta <= 0 && theta >= -45)
 		{
 			leftHorizontalLines.push_back(Vec2f(theta, intercept));
 		}
