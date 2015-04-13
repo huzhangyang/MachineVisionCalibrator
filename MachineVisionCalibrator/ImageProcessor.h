@@ -7,6 +7,8 @@
 using namespace cv;
 using namespace std;
 
+const int CROSS_COUNT = 9;
+
 class ImageProcessor{
 public:
 	static ImageProcessor* Instance();

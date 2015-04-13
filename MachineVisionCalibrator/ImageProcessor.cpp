@@ -237,29 +237,35 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	sort(rightHorizontalLines.begin(), rightHorizontalLines.end(), interceptcomp);
 	sort(leftHorizontalLines.begin(), leftHorizontalLines.end(), interceptcomp);
 	sort(verticalLines.begin(), verticalLines.end(), interceptcomp);
-	rightHorizontalLines.erase(rightHorizontalLines.begin());
-	rightHorizontalLines.pop_back();
-	leftHorizontalLines.erase(leftHorizontalLines.begin());
-	leftHorizontalLines.pop_back();
-	verticalLines.erase(verticalLines.begin());
-	verticalLines.pop_back();
+	if (rightHorizontalLines.size() > CROSS_COUNT)
+		rightHorizontalLines.erase(rightHorizontalLines.begin());
+	if (rightHorizontalLines.size() > CROSS_COUNT)
+		rightHorizontalLines.pop_back();
+	if (leftHorizontalLines.size() > CROSS_COUNT)
+		leftHorizontalLines.erase(leftHorizontalLines.begin());
+	if (leftHorizontalLines.size() > CROSS_COUNT)
+		leftHorizontalLines.pop_back();
+	if (verticalLines.size() > CROSS_COUNT)
+		verticalLines.erase(verticalLines.begin());
+	if (verticalLines.size() > CROSS_COUNT)
+		verticalLines.pop_back();
 	//split vertical lines
 	for (size_t i = 0; i < verticalLines.size(); i++)
 	{
-		if (i < verticalLines.size() / 2 - 1)
+		if (i < verticalLines.size() / 2)
 			leftVerticalLines.push_back(verticalLines.at(i));
-		else if (i > verticalLines.size() / 2 - 1)
+		else if (i > verticalLines.size() / 2)
 			rightVerticalLines.push_back(verticalLines.at(i));
 	}
 	//check if each type of lines is at its correct count
-	if (leftHorizontalLines.size() != 9)
-		cout << "leftHorizontalLines Count = " << leftHorizontalLines.size() << ", was expecting 9, might output wrong result." << endl;
-	if (rightHorizontalLines.size() != 9)
-		cout << "rightHorizontalLines Count = " << rightHorizontalLines.size() << ", was expecting 9, might output wrong result." << endl;
-	if (leftVerticalLines.size() != 9)
-		cout << "leftVerticalLines Count = " << leftVerticalLines.size() << ", was expecting 9, might output wrong result." << endl;
-	if (rightVerticalLines.size() != 9)
-		cout << "rightVerticalLines Count = " << rightVerticalLines.size() << ", was expecting 9, might output wrong result." << endl;
+	if (leftHorizontalLines.size() != CROSS_COUNT)
+		cout << "leftHorizontalLines Count = " << leftHorizontalLines.size() << ", was expecting " << CROSS_COUNT << ", might output wrong result." << endl;
+	if (rightHorizontalLines.size() != CROSS_COUNT)
+		cout << "rightHorizontalLines Count = " << rightHorizontalLines.size() << ", was expecting " << CROSS_COUNT << ", might output wrong result." << endl;
+	if (leftVerticalLines.size() != CROSS_COUNT)
+		cout << "leftVerticalLines Count = " << leftVerticalLines.size() << ", was expecting " << CROSS_COUNT << ", might output wrong result." << endl;
+	if (rightVerticalLines.size() != CROSS_COUNT)
+		cout << "rightVerticalLines Count = " << rightVerticalLines.size() << ", was expecting " << CROSS_COUNT << ", might output wrong result." << endl;
 	//calculate interscetion points
 	for (size_t i = 0; i < leftVerticalLines.size(); i++)
 	{
