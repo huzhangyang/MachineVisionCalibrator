@@ -7,6 +7,9 @@ int hough_minvote = 5;
 int hough_minlength = 5;
 int hough_maxgap = 20;
 
+int ImageHeight;
+int ImageWidth;
+
 Mat sourceImage, edgeImage, detectedImage;
 vector<Vec4i> detectedLines;
 vector<Vec2f> optimizedLines;
@@ -22,6 +25,8 @@ int main(int argc, char** argv)
 	bool outputResult = false;
 
 	sourceImage = IOManager::Instance()->ReadImage(filename);
+	ImageHeight = sourceImage.rows;
+	ImageWidth = sourceImage.cols;
 	if (showSourceImage)
 	{
 		GUIManager::Instance()->CreateWindow("Source Image");

@@ -7,8 +7,6 @@
 using namespace cv;
 using namespace std;
 
-const int CROSS_COUNT = 9;
-
 class ImageProcessor{
 public:
 	static ImageProcessor* Instance();
@@ -22,6 +20,7 @@ public:
 	vector<Vec2f> AddUndetectedLines(vector<Vec2f> lines);
 	vector<Point> GetIntersectionPoints(vector<Vec2f>lines);
 private:
+	Vec2f MergeLines(vector<Vec2f> lines);
 	ImageProcessor();
 };
 #endif 

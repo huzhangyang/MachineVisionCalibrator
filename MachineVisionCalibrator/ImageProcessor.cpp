@@ -1,4 +1,5 @@
 #include "ImageProcessor.h"
+#include "Global.h"
 
 static ImageProcessor* processor = nullptr;//µ¥Àý
 
@@ -111,25 +112,29 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision)
 {
 	vector<Vec2f> optimizedLines;
+	vector<Vec2f> duplicateLines;
 
 	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
 	{
 		float theta = (*iterator)[0];
 		float intercept = (*iterator)[1];
-		bool isDuplicateLine = false;
-		for (auto iterator = optimizedLines.begin(); iterator != optimizedLines.end(); iterator++)
+		bool hasDuplicateLine = false;
+		duplicateLines.clear();
+		duplicateLines.push_back(Vec2f(theta, intercept));
+		for (auto iterator2 = iterator + 1; iterator2 != lines.end(); iterator2++)
 		{
-			float theta2 = (*iterator)[0];
-			float intercept2 = (*iterator)[1];
+			float theta2 = (*iterator2)[0];
+			float intercept2 = (*iterator2)[1];
 			if (abs(theta - theta2) <= thetaPrecision && abs(intercept - intercept2) <= interceptPrecision)
 			{
-				isDuplicateLine = true;
+				hasDuplicateLine = true;
+				duplicateLines.push_back(Vec2f(theta2, intercept2));
 				break;
 			}
 		}
-		if (!isDuplicateLine)
+		if (!hasDuplicateLine)
 		{
-			optimizedLines.push_back(Vec2f(theta, intercept));
+			optimizedLines.push_back(MergeLines(duplicateLines));
 		}
 		else
 		{
@@ -344,4 +349,70 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	return interscetionPoints;
 }
 
+Vec2f ImageProcessor::MergeLines(vector<Vec2f> lines)
+{
+	float x1 = 0;
+	float y1 = 0;
+	float x2 = 0;
+	float y2 = 0;
+
+	for (int i = 0; i < lines.size(); i++)
+	{
+		float theta = lines[i][0], intercept = lines[i][1];
+		if (theta == 0)
+		{
+			x1 += 0;
+			y1 += intercept;
+			x2 += ImageWidth;
+			y2 += intercept;
+		}
+		else if (theta == 90)
+		{
+			x1 += intercept;
+			y1 += 0;
+			x2 += intercept;
+			y2 += ImageHeight;
+		}
+		else
+		{
+			if (theta > 45 || theta < -45)
+			{
+				x1 += intercept;
+				y1 += 0;
+				x2 += intercept + ImageHeight / tan(theta / 180 * CV_PI);
+				y2 += ImageHeight;
+			}
+			else
+			{
+				x1 += 0;
+				y1 += intercept;
+				x2 += ImageWidth;
+				y2 += intercept + ImageWidth * tan(theta / 180 * CV_PI);
+			}
+		}
+	}
+	x1 /= lines.size();
+	y1 /= lines.size();
+	x2 /= lines.size();
+	y2 /= lines.size();
+
+	float theta, intercept;
+	if (y2 == y1)
+	{
+		theta = 0; intercept = y1;//horizontal
+	}
+	else if (x2 == x1)
+	{
+		theta = 90; intercept = x1;//vertical
+	}
+	else
+	{
+		theta = atan2(y2 - y1, x2 - x1) * 180 / CV_PI;
+		if (theta > 45 || theta < -45)
+			intercept = x1 - y1 / tan(theta / 180 * CV_PI);//"vertical", use x as intercept
+		else
+			intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
+	}
+	return Vec2f(theta, intercept);
+}
 

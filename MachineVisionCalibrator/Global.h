@@ -11,4 +11,9 @@ using namespace std;
 
 #define DEBUG 0;
 
+const int CROSS_COUNT = 9;
+
+extern int ImageHeight;
+extern int ImageWidth;
+
 #endif 
