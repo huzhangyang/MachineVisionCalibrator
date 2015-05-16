@@ -107,41 +107,49 @@ vector<Vec2f> ImageProcessor::TransformLineFormula(vector<Vec4i> lines)
 
 /*
 	合并重复的直线。
-	//TODO 对于duplicateline，应该求其加权平均值
+	对每一条“未使用”直线，遍历全局，寻找其重复者。若找到，将重复者点集加入集合，并将重复者标记为“使用过”。
+	遍历后，对直线及其重复者进行拟合。
 */
 vector<Vec2f> ImageProcessor::MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision)
 {
 	vector<Vec2f> optimizedLines;
 	vector<Vec2f> duplicateLines;
+	vector<Vec2f> mergedLines;
 
 	for (auto iterator = lines.begin(); iterator != lines.end(); iterator++)
 	{
 		float theta = (*iterator)[0];
 		float intercept = (*iterator)[1];
-		bool hasDuplicateLine = false;
-		duplicateLines.clear();
+		int isMerged = false;
+
+		for (auto i = mergedLines.begin(); i != mergedLines.end(); i++)
+		{
+			if (mergedLines.empty())break;
+			float _theta = (*i)[0];
+			float _intercept = (*i)[1];
+			if (theta == _theta && intercept == _intercept)
+			{// this line is merged
+				isMerged = true;
+				break;
+			}	
+		}
+		if (isMerged)
+			continue;
 		duplicateLines.push_back(Vec2f(theta, intercept));
+		mergedLines.push_back(Vec2f(theta, intercept));
 		for (auto iterator2 = iterator + 1; iterator2 != lines.end(); iterator2++)
 		{
 			float theta2 = (*iterator2)[0];
 			float intercept2 = (*iterator2)[1];
 			if (abs(theta - theta2) <= thetaPrecision && abs(intercept - intercept2) <= interceptPrecision)
 			{
-				hasDuplicateLine = true;
 				duplicateLines.push_back(Vec2f(theta2, intercept2));
-				break;
+				mergedLines.push_back(Vec2f(theta2, intercept2));
+				//break;
 			}
 		}
-		if (!hasDuplicateLine)
-		{
-			optimizedLines.push_back(MergeLines(duplicateLines));
-		}
-		else
-		{
-#if DEBUG
-			cout << theta << "," << intercept << " is duplicate." << endl;
-#endif
-		}
+		optimizedLines.push_back(MergeLines(duplicateLines));
+		duplicateLines.clear();
 	}
 
 	return optimizedLines;
