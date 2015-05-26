@@ -9,6 +9,7 @@ int hough_maxgap = 20;
 
 int ImageHeight;
 int ImageWidth;
+int parameterReference;
 
 Mat sourceImage, edgeImage, detectedImage;
 vector<Vec4i> detectedLines;
@@ -19,7 +20,8 @@ void OnChangeHoughParameter(int, void*);
 
 int main(int argc, char** argv)
 {
-	const char* filename = argc >= 2 ? argv[1] : "test2.jpg";
+	cout << "11061093 Zhangyang Hu\nWelcome to machine vision feature point detect."<<endl;
+	const char* filename = argc >= 2 ? argv[1] : "test.jpg";
 	bool showSourceImage = false;
 	bool showEdgeImage = false;
 	bool outputResult = false;
@@ -27,6 +29,7 @@ int main(int argc, char** argv)
 	sourceImage = IOManager::Instance()->ReadImage(filename);
 	ImageHeight = sourceImage.rows;
 	ImageWidth = sourceImage.cols;
+	parameterReference = sqrt(ImageHeight * ImageWidth);
 	if (showSourceImage)
 	{
 		GUIManager::Instance()->CreateWindow("Source Image");
@@ -65,13 +68,13 @@ void OnChangeCannyParameter(int, void*)
 void OnChangeHoughParameter(int, void*)
 {
 	sourceImage.copyTo(detectedImage);
-	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
+	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, parameterReference / 56, parameterReference / 14);
 	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
-	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, 50);
+	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, parameterReference / 56);
 	optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines, 10, 5);
 	optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
 	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
-	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), 2);
-	GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0));
+	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), parameterReference / 1000 + 1);
+	GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0), parameterReference / 200);
 	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
 }

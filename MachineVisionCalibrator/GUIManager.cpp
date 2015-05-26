@@ -48,11 +48,11 @@ void GUIManager::DrawLines(Mat sourceImage, vector<Vec2f> lines, Scalar color, i
 	}
 }
 
-void GUIManager::DrawPoints(Mat sourceImage, vector<Point> points, Scalar color)
+void GUIManager::DrawPoints(Mat sourceImage, vector<Point> points, Scalar color, int thickness)
 {
 	for (int i = 0; i < points.size(); i++)
 	{
-		circle(sourceImage, points[i], 10, color, CV_FILLED);
+		circle(sourceImage, points[i], thickness, color, CV_FILLED);
 	}
 }
 
