@@ -315,7 +315,9 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 #endif
 			}
 		}
+#if DEBUG
 		cout << endl;
+#endif
 	}
 	for (size_t i = 0; i < rightVerticalLines.size(); i++)
 	{
@@ -352,7 +354,9 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 #endif
 			}
 		}
+#if DEBUG
 		cout << endl;
+#endif
 	}
 	return interscetionPoints;
 }

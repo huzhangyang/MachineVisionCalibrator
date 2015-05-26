@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include<time.h>
 using namespace std;
 
 #define DEBUG 0;

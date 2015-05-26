@@ -20,8 +20,9 @@ void OnChangeHoughParameter(int, void*);
 
 int main(int argc, char** argv)
 {
-	cout << "11061093 Zhangyang Hu\nWelcome to machine vision feature point detect."<<endl;
+	cout << "11061093 Zhangyang Hu\nWelcome to machine vision feature point detect.\n"<<endl;
 	const char* filename = argc >= 2 ? argv[1] : "test.jpg";
+	clock_t startTime, finishTime;
 	bool showSourceImage = false;
 	bool showEdgeImage = false;
 	bool outputResult = false;
@@ -30,6 +31,8 @@ int main(int argc, char** argv)
 	ImageHeight = sourceImage.rows;
 	ImageWidth = sourceImage.cols;
 	parameterReference = sqrt(ImageHeight * ImageWidth);
+	cout << "File:" << filename << "\nSize :" << ImageWidth << "*" << ImageHeight << "\nExecuting..." << endl;
+	startTime = clock();
 	if (showSourceImage)
 	{
 		GUIManager::Instance()->CreateWindow("Source Image");
@@ -53,6 +56,8 @@ int main(int argc, char** argv)
 #endif
 	OnChangeHoughParameter(0, 0);//execute callback at start
 
+	finishTime = clock();
+	cout << "Done. Time: " <<(float)(finishTime - startTime) / CLOCKS_PER_SEC <<"s." <<endl;
 	if (outputResult)
 		IOManager::Instance()->OutputResult(interscetionPoints, "out.txt");
 	waitKey();
