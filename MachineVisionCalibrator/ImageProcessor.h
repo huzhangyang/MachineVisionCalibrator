@@ -17,10 +17,12 @@ public:
 	vector<Vec2f> TransformLineFormula(vector<Vec4i> lines);
 	vector<Vec2f> MergeDuplicateLines(vector<Vec2f> lines, int thetaPrecision, int interceptPrecision);
 	vector<Vec2f> RemoveIndependentLines(vector<Vec2f> lines, int thetaPrecision, int threshold);
-	vector<Vec2f> AddUndetectedLines(vector<Vec2f> lines);
-	vector<Point> GetIntersectionPoints(vector<Vec2f>lines);
+	vector<Vec2f>* GroupOrientalLines(vector<Vec2f> lines);
+	vector<Vec2f>* AddUndetectedLines(vector<Vec2f>* splitedLines);
+	vector<Point> GetIntersectionPoints(vector<Vec2f>* splitedLines);
 private:
 	Vec2f MergeLines(vector<Vec2f> lines);
+	Point GetIntersectionPoint(float theta, float intercept, float theta2, float intercept2);
 	ImageProcessor();
 };
 #endif 

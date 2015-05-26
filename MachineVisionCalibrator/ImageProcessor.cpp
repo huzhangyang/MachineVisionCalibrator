@@ -189,32 +189,92 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int th
 }
 
 /*
+	将直线按方向分割为四部分。
+	首先以45°为分界线分割为横竖线。
+	然后找出竖线中线，以此分割左右竖线。
+	对每个横线，计算其与竖线中线的交点，找出与其交点最近的横线，比较theta。
+	theta较大的为右横线，较小的为左横线。
+*/
+vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
+{
+	vector<Vec2f>* splitedLines = new vector<Vec2f>[4];//0~3:leftVertical,rightVertical,leftHorizontal,rightHorizontal
+	vector<Vec2f> verticalLines,horizontalLines;
+
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		float theta = lines[i][0];
+		float intercept = lines[i][1];
+		if (theta > 45 || theta < -45)
+			verticalLines.push_back(Vec2f(theta, intercept));
+		else
+			horizontalLines.push_back(Vec2f(theta, intercept));
+	}
+
+	sort(verticalLines.begin(), verticalLines.end(), interceptcomp);
+	for (size_t i = 0; i < verticalLines.size(); i++)
+	{
+		if (i < verticalLines.size() / 2)
+			splitedLines[0].push_back(verticalLines.at(i));
+		else if (i > verticalLines.size() / 2)
+			splitedLines[1].push_back(verticalLines.at(i));
+	}
+
+	for (size_t i = 0; i < horizontalLines.size(); i++)
+	{
+		float minDistance = 65535;
+		bool isLeft = false;
+
+		float theta = verticalLines[verticalLines.size() / 2][0];
+		float intercept = verticalLines[verticalLines.size() / 2][1];
+		float theta2 = horizontalLines[i][0];
+		float intercept2 = horizontalLines[i][1];
+		Point interscetionPoint = GetIntersectionPoint(theta,intercept,theta2,intercept2);
+
+		for (size_t j = 0; j < horizontalLines.size(); j++)
+		{
+			if (j == i)continue;
+			float theta3 = horizontalLines[j][0];
+			float intercept3 = horizontalLines[j][1];
+			Point interscetionPoint2 = GetIntersectionPoint(theta, intercept, theta3, intercept3);
+			float distance = pow(interscetionPoint.x - interscetionPoint2.x, 2) + pow(interscetionPoint.y - interscetionPoint2.y, 2);
+			if (distance < minDistance)
+			{
+				minDistance = distance;
+				if (theta2 < theta3)
+					isLeft = true;
+				else
+					isLeft = false;
+			}
+		}
+		if (isLeft)
+			splitedLines[2].push_back(horizontalLines.at(i));
+		else
+			splitedLines[3].push_back(horizontalLines.at(i));
+	}
+
+	return splitedLines;
+}
+
+/*
 	添加遗漏的直线。
 	首先需要想办法得知平均直线间距，需要假定数据中的边缘直线是真正的边缘直线。
 	使用最左最右两条竖线，得知纵向平均直线间距，可以认为其基本等于横向平均直线间距。
 	若间距小于平均间距，则是多余直线。若间距大于平均间距，则是遗漏直线。
 	但横向的问题还是要分开处理？
 */
-vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
+vector<Vec2f>* ImageProcessor::AddUndetectedLines(vector<Vec2f>* lines)
 {
 	vector<Vec2f> optimizedLines;
+	vector<Vec2f> leftVerticalLines = lines[0];
+	vector<Vec2f> rightVerticalLines = lines[1];
+	vector<Vec2f> leftHorizontalLines = lines[2];
+	vector<Vec2f> rightHorizontalLines = lines[3];
 
 	// calculate avgLineGap
-	int maxIntercept = -65535;
-	int minIntercept = 65535;
-	for (size_t i = 0; i < lines.size(); i++)
-	{
-		float theta = lines[i][0];
-		float intercept = lines[i][1];
-		if (theta > 45 || theta < -45)//vertical
-		{
-			if (intercept < minIntercept)minIntercept = intercept;
-			else if (intercept > maxIntercept)maxIntercept = intercept;
-		}
-	}
-	int avgLineGap = (maxIntercept - minIntercept) / 20;
+	sort(leftVerticalLines.begin(), leftVerticalLines.end(), interceptcomp);
+	sort(rightVerticalLines.begin(), rightVerticalLines.end(), interceptcomp);
+	int avgLineGap = (leftVerticalLines[0][1] - rightVerticalLines[rightVerticalLines.size()-1][1]) / 20;
 	//check line gaps
-	sort(lines.begin(), lines.end(), vec2fcomp);
 	return lines;
 }
 
@@ -222,34 +282,18 @@ vector<Vec2f> ImageProcessor::AddUndetectedLines(vector<Vec2f> lines)
 	求取直线的交点
 	将线分成四段，并分别计算左边横线与纵线，右边横线与纵线的交点
 */
-vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
+vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f>* lines)
 {
 	vector<Point> interscetionPoints;
-	vector<Vec2f> verticalLines;
-	vector<Vec2f> leftVerticalLines;
-	vector<Vec2f> rightVerticalLines;
-	vector<Vec2f> leftHorizontalLines;
-	vector<Vec2f> rightHorizontalLines;
-	//split lines into vertical and horizontal
-	for (size_t i = 0; i < lines.size(); i++)
-	{
-		float theta = lines[i][0];
-		float intercept = lines[i][1];
-		if (theta >= 0 && theta <= 45)
-		{
-			rightHorizontalLines.push_back(Vec2f(theta, intercept));
-		}
-		else if (theta <= 0 && theta >= -45)
-		{
-			leftHorizontalLines.push_back(Vec2f(theta, intercept));
-		}
-		else
-			verticalLines.push_back(Vec2f(theta, intercept));//put it here first, split later
-	}
+	vector<Vec2f> leftVerticalLines = lines[0];
+	vector<Vec2f> rightVerticalLines = lines[1];
+	vector<Vec2f> leftHorizontalLines = lines[2];
+	vector<Vec2f> rightHorizontalLines = lines[3];
 	//sort and erase edge lines
 	sort(rightHorizontalLines.begin(), rightHorizontalLines.end(), interceptcomp);
 	sort(leftHorizontalLines.begin(), leftHorizontalLines.end(), interceptcomp);
-	sort(verticalLines.begin(), verticalLines.end(), interceptcomp);
+	sort(leftVerticalLines.begin(), leftVerticalLines.end(), interceptcomp);
+	sort(rightVerticalLines.begin(), rightVerticalLines.end(), interceptcomp);
 	if (rightHorizontalLines.size() > CROSS_COUNT)
 		rightHorizontalLines.erase(rightHorizontalLines.begin());
 	if (rightHorizontalLines.size() > CROSS_COUNT)
@@ -258,18 +302,10 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 		leftHorizontalLines.erase(leftHorizontalLines.begin());
 	if (leftHorizontalLines.size() > CROSS_COUNT)
 		leftHorizontalLines.pop_back();
-	if (verticalLines.size() > CROSS_COUNT)
-		verticalLines.erase(verticalLines.begin());
-	if (verticalLines.size() > CROSS_COUNT)
-		verticalLines.pop_back();
-	//split vertical lines
-	for (size_t i = 0; i < verticalLines.size(); i++)
-	{
-		if (i < verticalLines.size() / 2)
-			leftVerticalLines.push_back(verticalLines.at(i));
-		else if (i > verticalLines.size() / 2)
-			rightVerticalLines.push_back(verticalLines.at(i));
-	}
+	if (leftVerticalLines.size() > CROSS_COUNT)
+		leftVerticalLines.erase(leftVerticalLines.begin());
+	if (rightVerticalLines.size() > CROSS_COUNT)
+		rightVerticalLines.pop_back();
 	//check if each type of lines is at its correct count
 	if (leftHorizontalLines.size() != CROSS_COUNT)
 		cout << "leftHorizontalLines Count = " << leftHorizontalLines.size() << ", was expecting " << CROSS_COUNT << ", might output wrong result." << endl;
@@ -282,38 +318,17 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	//calculate interscetion points
 	for (size_t i = 0; i < leftVerticalLines.size(); i++)
 	{
-		if (leftVerticalLines[i][0] == 90)
+		float theta = leftVerticalLines[i][0];
+		float intercept = leftVerticalLines[i][1];
+		for (size_t j = 0; j < leftHorizontalLines.size(); j++)
 		{
-			float intercept = leftVerticalLines[i][1];
-			for (size_t j = 0; j < leftHorizontalLines.size(); j++)
-			{
-				float k2 = tan(leftHorizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
-				float b2 = leftHorizontalLines[j][1];//intercept = b
-
-				float x = intercept;
-				float y = k2 * x + b2;
-				interscetionPoints.push_back(Point(x, y));
+			float theta2 = leftHorizontalLines[j][0];
+			float intercept2 = leftHorizontalLines[j][1];
+			Point intersectionPoint = GetIntersectionPoint(theta, intercept, theta2, intercept2);
+			interscetionPoints.push_back(intersectionPoint);
 #if DEBUG
-				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+			cout << "(" << cvRound(intersectionPoint.x) << "," << cvRound(intersectionPoint.y) << ") ";
 #endif
-			}
-		}
-		else
-		{
-			float k1 = tan(leftVerticalLines[i][0] / 180 * CV_PI);//k =tan(theta)
-			float b1 = -leftVerticalLines[i][1] * k1;//intercept = -b/k
-			for (size_t j = 0; j < leftHorizontalLines.size(); j++)
-			{
-				float k2 = tan(leftHorizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
-				float b2 = leftHorizontalLines[j][1];//intercept = b
-
-				float x = (b2 - b1) / (k1 - k2);
-				float y = k1 * x + b1;
-				interscetionPoints.push_back(Point(x, y)); 
-#if DEBUG
-				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
-#endif
-			}
 		}
 #if DEBUG
 		cout << endl;
@@ -321,38 +336,17 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f> lines)
 	}
 	for (size_t i = 0; i < rightVerticalLines.size(); i++)
 	{
-		if (rightVerticalLines[i][0] == 90)
+		float theta = rightVerticalLines[i][0];
+		float intercept = rightVerticalLines[i][1];
+		for (size_t j = 0; j < rightHorizontalLines.size(); j++)
 		{
-			float intercept = rightVerticalLines[i][1];
-			for (size_t j = 0; j < rightHorizontalLines.size(); j++)
-			{
-				float k2 = tan(rightHorizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
-				float b2 = rightHorizontalLines[j][1];//intercept = b
-
-				float x = intercept;
-				float y = k2 * x + b2;
-				interscetionPoints.push_back(Point(x, y));
+			float theta2 = rightHorizontalLines[j][0];
+			float intercept2 = rightHorizontalLines[j][1];
+			Point intersectionPoint = GetIntersectionPoint(theta, intercept, theta2, intercept2);
+			interscetionPoints.push_back(intersectionPoint);
 #if DEBUG
-				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
+			cout << "(" << cvRound(intersectionPoint.x) << "," << cvRound(intersectionPoint.y) << ") ";
 #endif
-			}
-		}
-		else
-		{
-			float k1 = tan(rightVerticalLines[i][0] / 180 * CV_PI);//k =tan(theta)
-			float b1 = -rightVerticalLines[i][1] * k1;//intercept = -b/k
-			for (size_t j = 0; j < rightHorizontalLines.size(); j++)
-			{
-				float k2 = tan(rightHorizontalLines[j][0] / 180 * CV_PI);//k =tan(theta)
-				float b2 = rightHorizontalLines[j][1];//intercept = b
-
-				float x = (b2 - b1) / (k1 - k2);
-				float y = k1 * x + b1;
-				interscetionPoints.push_back(Point(x, y));
-#if DEBUG
-				cout << "(" << cvRound(x) << "," << cvRound(y) << ") ";
-#endif
-			}
 		}
 #if DEBUG
 		cout << endl;
@@ -426,5 +420,28 @@ Vec2f ImageProcessor::MergeLines(vector<Vec2f> lines)
 			intercept = y1 - x1 * tan(theta / 180 * CV_PI);//"horizontal", use y as intercept
 	}
 	return Vec2f(theta, intercept);
+}
+
+Point ImageProcessor::GetIntersectionPoint(float theta, float intercept, float theta2, float intercept2)
+{
+	Point interscetionPoint;
+	float k1 = tan(theta / 180 * CV_PI);//k =tan(theta)
+	float b1 = -intercept * k1;//intercept = -b/k
+	float k2 = tan(theta2 / 180 * CV_PI);//k =tan(theta)
+	float b2 = intercept2;//intercept = b
+
+	if (theta == 90)
+	{
+		float x = intercept;
+		float y = k2 * x + b2;
+		interscetionPoint = Point(x, y);
+	}
+	else
+	{
+		float x = (b2 - b1) / (k1 - k2);
+		float y = k1 * x + b1;
+		interscetionPoint = Point(x, y);
+	}
+	return interscetionPoint;
 }
 

@@ -14,6 +14,7 @@ int parameterReference;
 Mat sourceImage, edgeImage, detectedImage;
 vector<Vec4i> detectedLines;
 vector<Vec2f> optimizedLines;
+vector<Vec2f>* splitedLines;
 vector<Point> interscetionPoints;
 void OnChangeCannyParameter(int, void*);
 void OnChangeHoughParameter(int, void*);
@@ -77,9 +78,13 @@ void OnChangeHoughParameter(int, void*)
 	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
 	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, parameterReference / 56);
 	optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines, 10, 5);
-	optimizedLines = ImageProcessor::Instance()->AddUndetectedLines(optimizedLines);
-	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(optimizedLines);
-	GUIManager::Instance()->DrawLines(detectedImage, optimizedLines, Scalar(0, 0, 255), parameterReference / 1000 + 1);
+	splitedLines = ImageProcessor::Instance()->GroupOrientalLines(optimizedLines);
+	splitedLines = ImageProcessor::Instance()->AddUndetectedLines(splitedLines);
+	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(splitedLines);
+	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[0], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[1], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[2], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[3], Scalar(0, 0, 255), parameterReference / 1000 + 1);
 	GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0), parameterReference / 200);
 	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
 }
