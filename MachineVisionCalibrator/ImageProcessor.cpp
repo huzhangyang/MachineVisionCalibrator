@@ -167,8 +167,7 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int th
 	{
 		float theta = (*iterator)[0];
 		float intercept = (*iterator)[1];
-		vector<Vec2f> similarLines;
-		similarLines.push_back(Vec2f(theta, intercept));
+		int similarLineCount = 1;
 		//找出相似的线段
 		for (auto iterator2 = optimizedLines.begin(); iterator2 != optimizedLines.end(); iterator2++)
 		{
@@ -176,10 +175,10 @@ vector<Vec2f> ImageProcessor::RemoveIndependentLines(vector<Vec2f> lines, int th
 			float intercept2 = (*iterator2)[1];
 			if (abs(theta - theta2) <= thetaPrecision)
 			{
-				similarLines.push_back(Vec2f(theta2, intercept2));
+				similarLineCount++;
 			}
 		}
-		if (similarLines.size() < threshold)
+		if (similarLineCount < threshold)
 		{
 			iterator = optimizedLines.erase(iterator);
 		}

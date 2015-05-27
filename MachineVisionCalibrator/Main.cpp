@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	clock_t startTime, finishTime;
 	bool showSourceImage = false;
 	bool showEdgeImage = false;
-	bool outputResult = false;
+	bool outputResult = true;
 
 	sourceImage = IOManager::Instance()->ReadImage(filename);
 	ImageHeight = sourceImage.rows;
@@ -44,8 +44,10 @@ int main(int argc, char** argv)
 	if (showEdgeImage)
 	{
 		GUIManager::Instance()->CreateWindow("Edge Image");
+#if DEBUG
 		GUIManager::Instance()->CreateTrackBar("Threshold", "Edge Image", &canny_threshold, 10, OnChangeCannyParameter);
 		GUIManager::Instance()->CreateTrackBar("Multiplier", "Edge Image", &canny_multiplier, 10, OnChangeCannyParameter);
+#endif
 		GUIManager::Instance()->ShowImage("Edge Image", edgeImage);
 	}
 

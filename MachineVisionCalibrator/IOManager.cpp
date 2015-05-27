@@ -39,7 +39,9 @@ void IOManager::OutputResult(vector<Point> points, string filename)
 	{
 		int x = cvRound(points[i].x);
 		int y = cvRound(points[i].y);
-		output << "(" << x << "," << y<< ") "<<endl;
+		output << "(" << x << "," << y << ") ";
+		if((i+1) % 9 == 0)
+			output << endl;
 	}
 	output.close();
 }
