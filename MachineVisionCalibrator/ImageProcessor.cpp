@@ -213,9 +213,9 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 	sort(verticalLines.begin(), verticalLines.end(), interceptcomp);
 	for (size_t i = 0; i < verticalLines.size(); i++)
 	{
-		if (i < verticalLines.size() / 2)
+		if (i > verticalLines.size() / 2)
 			splitedLines[0].push_back(verticalLines.at(i));
-		else if (i > verticalLines.size() / 2)
+		else if (i < verticalLines.size() / 2)
 			splitedLines[1].push_back(verticalLines.at(i));
 	}
 
@@ -240,7 +240,7 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 			if (distance < minDistance)
 			{
 				minDistance = distance;
-				if (theta2 < theta3)
+				if (theta2 > theta3)
 					isLeft = true;
 				else
 					isLeft = false;
@@ -257,25 +257,45 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 
 /*
 	添加遗漏的直线。
-	首先需要想办法得知平均直线间距，需要假定数据中的边缘直线是真正的边缘直线。
-	使用最左最右两条竖线，得知纵向平均直线间距，可以认为其基本等于横向平均直线间距。
-	若间距小于平均间距，则是多余直线。若间距大于平均间距，则是遗漏直线。
-	但横向的问题还是要分开处理？
+	首先计算每一边的平均直线间距。
+	若间距明显大于平均间距，则是遗漏直线。（有可能遗漏多条，依次处理）
+	若间距明显小于平均间距，则是多余直线。（容易鬼畜，没时间管了）
 */
 vector<Vec2f>* ImageProcessor::AddUndetectedLines(vector<Vec2f>* lines)
 {
-	vector<Vec2f> optimizedLines;
-	vector<Vec2f> leftVerticalLines = lines[0];
-	vector<Vec2f> rightVerticalLines = lines[1];
-	vector<Vec2f> leftHorizontalLines = lines[2];
-	vector<Vec2f> rightHorizontalLines = lines[3];
+	vector<Vec2f>* optimizedLines = lines;
 
-	// calculate avgLineGap
-	sort(leftVerticalLines.begin(), leftVerticalLines.end(), interceptcomp);
-	sort(rightVerticalLines.begin(), rightVerticalLines.end(), interceptcomp);
-	int avgLineGap = (leftVerticalLines[0][1] - rightVerticalLines[rightVerticalLines.size()-1][1]) / 20;
+	// sort lines
+	sort(optimizedLines[0].begin(), optimizedLines[0].end(), interceptcomp);
+	sort(optimizedLines[1].begin(), optimizedLines[1].end(), interceptcomp);
+	sort(optimizedLines[2].begin(), optimizedLines[2].end(), interceptcomp);
+	sort(optimizedLines[3].begin(), optimizedLines[3].end(), interceptcomp);
 	//check line gaps
-	return lines;
+	for (int i = 0; i < 3; i++)
+	{
+		int avgLineGap = (optimizedLines[i][0][1] - optimizedLines[i][optimizedLines[i].size() - 1][1])
+			/ (optimizedLines[i].size() - 1);
+		for (auto iterator = optimizedLines[i].begin(); iterator != optimizedLines[i].end() - 1; iterator++)
+		{
+			int lineGap = (*iterator)[1] - (*(iterator+1))[1];
+			if (lineGap > avgLineGap)
+			{
+				int linesNeedToBeAdded =(int)((lineGap / (float)avgLineGap) - 0.5);//should be a better way to determine it
+				for (int j = 0; j < linesNeedToBeAdded; j++)
+				{
+					vector<Vec2f> linesToMerge;
+					linesToMerge.push_back(*iterator);
+					linesToMerge.push_back(*(iterator + 1));
+					iterator = optimizedLines[i].insert(iterator + 1, MergeLines(linesToMerge));
+				}
+			}
+			else
+			{
+				//TODO
+			}
+		}
+	}
+	return optimizedLines;
 }
 
 /*
@@ -294,6 +314,7 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f>* lines)
 	sort(leftHorizontalLines.begin(), leftHorizontalLines.end(), interceptcomp);
 	sort(leftVerticalLines.begin(), leftVerticalLines.end(), interceptcomp);
 	sort(rightVerticalLines.begin(), rightVerticalLines.end(), interceptcomp);
+	//donot always erase horizontal lines, check if condition is proper
 	if (rightHorizontalLines.size() > CROSS_COUNT)
 		rightHorizontalLines.erase(rightHorizontalLines.begin());
 	if (rightHorizontalLines.size() > CROSS_COUNT)
@@ -302,10 +323,9 @@ vector<Point> ImageProcessor::GetIntersectionPoints(vector<Vec2f>* lines)
 		leftHorizontalLines.erase(leftHorizontalLines.begin());
 	if (leftHorizontalLines.size() > CROSS_COUNT)
 		leftHorizontalLines.pop_back();
-	if (leftVerticalLines.size() > CROSS_COUNT)
-		leftVerticalLines.erase(leftVerticalLines.begin());
-	if (rightVerticalLines.size() > CROSS_COUNT)
-		rightVerticalLines.pop_back();
+	//always remove vertical lines,since edge vertical lines is always likely to be detected
+		leftVerticalLines.pop_back();
+		rightVerticalLines.erase(rightVerticalLines.begin());
 	//check if each type of lines is at its correct count
 	if (leftHorizontalLines.size() != CROSS_COUNT)
 		cout << "leftHorizontalLines Count = " << leftHorizontalLines.size() << ", was expecting " << CROSS_COUNT << ", might output wrong result." << endl;
