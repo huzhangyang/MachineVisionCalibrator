@@ -18,14 +18,17 @@ vector<Vec2f>* splitedLines;
 vector<Point> interscetionPoints;
 void OnChangeCannyParameter(int, void*);
 void OnChangeHoughParameter(int, void*);
+void PostProcess();
 
 int main(int argc, char** argv)
 {
 	cout << "11061093 Zhangyang Hu\nWelcome to machine vision feature point detect.\n"<<endl;
-	const char* filename = argc >= 2 ? argv[1] : "test.jpg";
+	const char* filename = argc >= 2 ? argv[1] : "image.jpg";
 	clock_t startTime, finishTime;
 	bool showSourceImage = false;
 	bool showEdgeImage = false;
+	bool showTransformedImage = false;
+	bool showResult = true;
 	bool outputResult = true;
 
 	sourceImage = IOManager::Instance()->ReadImage(filename);
@@ -51,16 +54,33 @@ int main(int argc, char** argv)
 		GUIManager::Instance()->ShowImage("Edge Image", edgeImage);
 	}
 
-	GUIManager::Instance()->CreateWindow("Optimized Image");
+	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, parameterReference / 56, parameterReference / 14);
+	if (showTransformedImage)
+	{
+		GUIManager::Instance()->CreateWindow("Transformed Image");
 #if DEBUG
-	GUIManager::Instance()->CreateTrackBar("MinVote", "Optimized Image", &hough_minvote, 10, OnChangeHoughParameter);
-	GUIManager::Instance()->CreateTrackBar("MinLength", "Optimized Image", &hough_minlength, 10, OnChangeHoughParameter);
-	GUIManager::Instance()->CreateTrackBar("MaxGap", "Optimized Image", &hough_maxgap, 20, OnChangeHoughParameter);
+		GUIManager::Instance()->CreateTrackBar("MinVote", "Optimized Image", &hough_minvote, 10, OnChangeHoughParameter);
+		GUIManager::Instance()->CreateTrackBar("MinLength", "Optimized Image", &hough_minlength, 10, OnChangeHoughParameter);
+		GUIManager::Instance()->CreateTrackBar("MaxGap", "Optimized Image", &hough_maxgap, 20, OnChangeHoughParameter);
 #endif
-	OnChangeHoughParameter(0, 0);//execute callback at start
-
+		GUIManager::Instance()->DrawLines(detectedImage, detectedLines, Scalar(0, 0, 255), parameterReference / 1000 + 1);
+		GUIManager::Instance()->ShowImage("Transformed Image", detectedImage);
+	}
 	finishTime = clock();
-	cout << "Done. Time: " <<(float)(finishTime - startTime) / CLOCKS_PER_SEC <<"s." <<endl;
+	cout << "Transform Done. Total Time: " << (float)(finishTime - startTime) / CLOCKS_PER_SEC << "s." << endl;
+	PostProcess();
+	finishTime = clock();
+	cout << "PostProcess Done. Total Time: " <<(float)(finishTime - startTime) / CLOCKS_PER_SEC <<"s." <<endl;
+	if (showResult)
+	{
+		GUIManager::Instance()->CreateWindow("Optimized Image");
+		GUIManager::Instance()->DrawLines(detectedImage, splitedLines[0], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+		GUIManager::Instance()->DrawLines(detectedImage, splitedLines[1], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+		GUIManager::Instance()->DrawLines(detectedImage, splitedLines[2], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+		GUIManager::Instance()->DrawLines(detectedImage, splitedLines[3], Scalar(0, 0, 255), parameterReference / 1000 + 1);
+		GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0), parameterReference / 200);
+		GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
+	}
 	if (outputResult)
 		IOManager::Instance()->OutputResult(interscetionPoints, "out.txt");
 	waitKey();
@@ -75,18 +95,18 @@ void OnChangeCannyParameter(int, void*)
 
 void OnChangeHoughParameter(int, void*)
 {
+	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, hough_minlength * 10, hough_maxgap * 10);
+	GUIManager::Instance()->DrawLines(sourceImage, detectedLines, Scalar(0, 0, 255), parameterReference / 1000 + 1);
+	GUIManager::Instance()->ShowImage("Transformed Image", sourceImage);
+}
+
+void PostProcess()
+{
 	sourceImage.copyTo(detectedImage);
-	detectedLines = ImageProcessor::Instance()->HoughLineTransformP(edgeImage, hough_minvote * 10, parameterReference / 56, parameterReference / 14);
 	optimizedLines = ImageProcessor::Instance()->TransformLineFormula(detectedLines);
 	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, parameterReference / 56);
 	optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines, 10, 5);
 	splitedLines = ImageProcessor::Instance()->GroupOrientalLines(optimizedLines);
-	splitedLines = ImageProcessor::Instance()->AddUndetectedLines(splitedLines);
+	//splitedLines = ImageProcessor::Instance()->AddUndetectedLines(splitedLines);
 	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(splitedLines);
-	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[0], Scalar(0, 0, 255), parameterReference / 1000 + 1);
-	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[1], Scalar(0, 0, 255), parameterReference / 1000 + 1);
-	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[2], Scalar(0, 0, 255), parameterReference / 1000 + 1);
-	GUIManager::Instance()->DrawLines(detectedImage, splitedLines[3], Scalar(0, 0, 255), parameterReference / 1000 + 1);
-	GUIManager::Instance()->DrawPoints(detectedImage, interscetionPoints, Scalar(255, 0, 0), parameterReference / 200);
-	GUIManager::Instance()->ShowImage("Optimized Image", detectedImage);
 }
