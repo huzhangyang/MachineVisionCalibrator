@@ -212,7 +212,7 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 	sort(verticalLines.begin(), verticalLines.end(), interceptcomp);
 	for (size_t i = 0; i < verticalLines.size(); i++)
 	{
-		if (i > verticalLines.size() / 2)
+		if (i >= verticalLines.size() / 2)
 			splitedLines[0].push_back(verticalLines.at(i));
 		else if (i < verticalLines.size() / 2)
 			splitedLines[1].push_back(verticalLines.at(i));
@@ -221,7 +221,7 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 	for (size_t i = 0; i < horizontalLines.size(); i++)
 	{
 		float minDistance = 65535;
-		bool isLeft = false;
+		int position = 0;//0 for error, 1 for left, 2 for right
 
 		float theta = verticalLines[verticalLines.size() / 2][0];
 		float intercept = verticalLines[verticalLines.size() / 2][1];
@@ -240,14 +240,14 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 			{
 				minDistance = distance;
 				if (theta2 > theta3)
-					isLeft = true;
+					position = 1;
 				else
-					isLeft = false;
+					position = 2;
 			}
 		}
-		if (isLeft)
+		if (position == 1)
 			splitedLines[2].push_back(horizontalLines.at(i));
-		else
+		else if (position == 2)
 			splitedLines[3].push_back(horizontalLines.at(i));
 	}
 
@@ -263,37 +263,65 @@ vector<Vec2f>* ImageProcessor::GroupOrientalLines(vector<Vec2f> lines)
 vector<Vec2f>* ImageProcessor::AddUndetectedLines(vector<Vec2f>* lines)
 {
 	vector<Vec2f>* optimizedLines = lines;
-
-	// sort lines
-	sort(optimizedLines[0].begin(), optimizedLines[0].end(), interceptcomp);
+	//put all elementes in optimizedLines[0](leftVertical) to optimizedLines[1](rightVertical)
+	for (auto iterator = optimizedLines[0].begin(); iterator != optimizedLines[0].end(); iterator++)
+	{
+		float theta = (*iterator)[0];
+		float intercept = (*iterator)[1];
+		optimizedLines[1].push_back(Vec2f(theta, intercept));
+	}
+	//sort lines
 	sort(optimizedLines[1].begin(), optimizedLines[1].end(), interceptcomp);
 	sort(optimizedLines[2].begin(), optimizedLines[2].end(), interceptcomp);
 	sort(optimizedLines[3].begin(), optimizedLines[3].end(), interceptcomp);
 	//check line gaps
-	for (int i = 0; i < 3; i++)
+	for (int i = 1; i < 3; i++)
 	{
-		int avgLineGap = (optimizedLines[i][0][1] - optimizedLines[i][optimizedLines[i].size() - 1][1])
-			/ (optimizedLines[i].size() - 1);
 		for (auto iterator = optimizedLines[i].begin(); iterator != optimizedLines[i].end() - 1; iterator++)
 		{
 			int lineGap = (*iterator)[1] - (*(iterator+1))[1];
-			if (lineGap > avgLineGap)
+			int cmpLineGap = 0;
+			
+			if (iterator == optimizedLines[i].begin())
 			{
-				int linesNeedToBeAdded =(int)((lineGap / (float)avgLineGap) - 0.5);//should be a better way to determine it
-				for (int j = 0; j < linesNeedToBeAdded; j++)
-				{
-					vector<Vec2f> linesToMerge;
-					linesToMerge.push_back(*iterator);
-					linesToMerge.push_back(*(iterator + 1));
-					iterator = optimizedLines[i].insert(iterator + 1, MergeLines(linesToMerge));
-				}
+				cmpLineGap = (*(iterator + 1))[1] - (*(iterator + 2))[1];
+			}
+			else if (iterator == optimizedLines[i].end() - 2)
+			{
+				cmpLineGap = (*(iterator - 1))[1] - (*iterator)[1];
 			}
 			else
 			{
-				//TODO
+				cmpLineGap = ((*(iterator - 1))[1] - (*iterator)[1] + (*(iterator + 1))[1] - (*(iterator + 2))[1]) / 2;
+			}
+			int linesNeedToBeAdded = (int)((lineGap / (float)cmpLineGap) - 0.5);//should have a better way to determine it
+			//add lines (if needed)
+			Vec2f currentLine = (*iterator);
+			Vec2f nextLine = (*(iterator + 1));
+			for (int j = 1; j <= linesNeedToBeAdded; j++)
+			{
+				vector<Vec2f> linesToMerge;
+				linesToMerge.push_back(currentLine);
+				linesToMerge.push_back(nextLine);
+				Vec2f lineToAdd = MergeLines(linesToMerge);
+				lineToAdd[1] = (lineToAdd[1] - nextLine[1]) / (currentLine[1] - nextLine[1]) * 2 * j / (linesNeedToBeAdded + 1);
+				lineToAdd[1] = nextLine[1] + (currentLine[1] - nextLine[1]) * lineToAdd[1];
+				iterator = optimizedLines[i].insert(iterator + 1, lineToAdd);
 			}
 		}
 	}
+	//split vertical lines again
+	vector<Vec2f> verticalLines = optimizedLines[1];
+	optimizedLines[0].clear();
+	optimizedLines[1].clear();
+	for (size_t i = 0; i < verticalLines.size(); i++)
+	{
+		if (i > verticalLines.size() / 2)
+			optimizedLines[0].push_back(verticalLines.at(i));
+		else if (i < verticalLines.size() / 2)
+			optimizedLines[1].push_back(verticalLines.at(i));
+	}
+
 	return optimizedLines;
 }
 

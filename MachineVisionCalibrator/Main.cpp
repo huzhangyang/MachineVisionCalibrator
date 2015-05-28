@@ -107,6 +107,6 @@ void PostProcess()
 	optimizedLines = ImageProcessor::Instance()->MergeDuplicateLines(optimizedLines, 5, parameterReference / 56);
 	optimizedLines = ImageProcessor::Instance()->RemoveIndependentLines(optimizedLines, 10, 5);
 	splitedLines = ImageProcessor::Instance()->GroupOrientalLines(optimizedLines);
-	//splitedLines = ImageProcessor::Instance()->AddUndetectedLines(splitedLines);
+	splitedLines = ImageProcessor::Instance()->AddUndetectedLines(splitedLines);
 	interscetionPoints = ImageProcessor::Instance()->GetIntersectionPoints(splitedLines);
 }
